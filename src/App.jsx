@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { diskTypes } from './data/disks'
 import { buildRaidComparison, calculateRaid, raidDefinitions, tbToPB, tiBToPiB } from './utils/raidCalculations'
 import { GraphicalAbout, RaidDiagram } from './components/RaidEnhancements'
+import CapacityConverter from './components/CapacityConverter'
 import './App.css'
 
 const number = (v, d = 0) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: d }).format(v || 0)
@@ -17,6 +18,7 @@ function Metric({ label, value, detail, accent = '' }) { return <article classNa
 function RebuildCard({ title, value, detail, accent }) { return <article className={`rebuild-card ${accent}`}><span>{title}</span><strong>{value === null ? 'Non disponible' : duration(value)}</strong><small>{detail}</small><div className="rebuild-bar"><i style={{ width: `${value === null ? 0 : Math.min(100, value / 96 * 100)}%` }} /></div></article> }
 
 function App() {
+  const [activeTool, setActiveTool] = useState('raid')
   const [raid, setRaid] = useState('')
   const [diskType, setDiskType] = useState('')
   const [diskCount, setDiskCount] = useState('')
@@ -35,7 +37,12 @@ function App() {
   const ready = raid && diskType && diskCount && diskSizeTB
 
   return <main className="shell">
-    <header className="hero"><span>STORAGE TOOLS</span><h1>RAID Calculator</h1><p>Dimensionnement d’un RAID matériel pour serveur capacitif</p></header>
+    <nav className="tool-navigation" aria-label="Outils de stockage">
+      <button type="button" className={activeTool === 'raid' ? 'active' : ''} aria-current={activeTool === 'raid' ? 'page' : undefined} onClick={() => setActiveTool('raid')}>RAID Calculator</button>
+      <button type="button" className={activeTool === 'converter' ? 'active' : ''} aria-current={activeTool === 'converter' ? 'page' : undefined} onClick={() => setActiveTool('converter')}>Convertisseur To / TiB</button>
+    </nav>
+    <header className="hero"><span>STORAGE TOOLS</span><h1>{activeTool === 'raid' ? 'RAID Calculator' : 'Convertisseur To / TiB'}</h1><p>{activeTool === 'raid' ? 'Dimensionnement d’un RAID matériel pour serveur capacitif' : 'Conversion rapide entre capacités décimales et binaires'}</p></header>
+    {activeTool === 'converter' ? <CapacityConverter /> : <>
     <section className="workspace">
       <article className="panel"><Heading n="01" title="Configuration RAID" badge={definition?.label || 'À configurer'} /><div className="form-grid">
         <label><span>Type de disque</span><select value={diskType} onChange={e => setDiskType(e.target.value)}><option value="">Sélectionner un type de disque</option>{Object.keys(diskTypes).map(x => <option key={x}>{x}</option>)}</select></label>
@@ -84,6 +91,7 @@ function App() {
     </>}
 
     <GraphicalAbout supportedRaidCount={Object.keys(raidDefinitions).length} supportedDiskCount={Object.keys(diskTypes).length}/>
+    </>}
   </main>
 }
 export default App

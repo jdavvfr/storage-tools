@@ -11,12 +11,10 @@ import {
 import AboutSection from './AboutSection'
 
 const volumeUnits = [
-  ['To', 'To (déc.)'],
-  ['Go', 'Go (déc.)'],
-  ['TiB', 'TiB (bin.)'],
-  ['GiB', 'GiB (bin.)'],
-  ['Mo', 'Mo (déc.)'],
-  ['MiB', 'MiB (bin.)'],
+  ['To', 'To'],
+  ['Go', 'Go'],
+  ['TiB', 'TiB'],
+  ['GiB', 'GiB'],
 ]
 
 const formatNumber = value => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(value)
@@ -84,7 +82,7 @@ export default function TapeLtoTools() {
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="Ex. 120"
+                placeholder="Volume de données"
                 value={volume}
                 onChange={event => setVolume(event.target.value)}
                 aria-invalid={Boolean(volumeError)}

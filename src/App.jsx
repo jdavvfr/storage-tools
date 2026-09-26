@@ -35,7 +35,7 @@ function App() {
   const ready = raid && diskType && diskCount && diskSizeTB
 
   return <main className="shell">
-    <header className="hero"><span>SERVER CAPACITY TOOL</span><h1>RAID Calculator</h1><p>Dimensionnement d’un RAID matériel pour serveur capacitif</p></header>
+    <header className="hero"><span>STORAGE TOOLS</span><h1>RAID Calculator</h1><p>Dimensionnement d’un RAID matériel pour serveur capacitif</p></header>
     <section className="workspace">
       <article className="panel"><Heading n="01" title="Configuration RAID" badge={definition?.label || 'À configurer'} /><div className="form-grid">
         <label><span>Type de disque</span><select value={diskType} onChange={e => setDiskType(e.target.value)}><option value="">Sélectionner un type de disque</option>{Object.keys(diskTypes).map(x => <option key={x}>{x}</option>)}</select></label>
@@ -61,13 +61,13 @@ function App() {
     {result.valid && <>
       <section className="panel"><Heading n="03" title="Capacité et performances" badge={<label className="pib-check"><input type="checkbox" checked={usePiB} onChange={e => setUsePiB(e.target.checked)} /> PiB</label>} /><div className="metrics">
         <Metric label="Capacité utile" value={capacity(result.usableTiB, usePiB)} detail={`(${decimal(result.usableTB, usePiB)})`} accent="cyan" />
-        <Metric label="Brut RAID actif" value={capacity(result.activeRawTiB, usePiB)} detail={`(${decimal(result.activeRawTB, usePiB)})`} />
-        <Metric label="Brut installé" value={capacity(result.installedRawTiB, usePiB)} detail={`(${decimal(result.installedRawTB, usePiB)}) · ${result.hotSpareStatus}`} />
-        <Metric label="Rendement installé" value={`${number(result.efficiencyInstalled, 1)} %`} detail={`${result.active} actifs + ${result.spares} spare${result.spares > 1 ? 's' : ''}`} />
-        <Metric label="Résilience" value={<Stars value={result.resilience} />} detail={`${result.resilience}/5 · ${result.faultTolerance}`} accent="green" />
+        <Metric label="IOPS lecture" value={iops(result.readIopsIops)}accent="purple" />
         <Metric label="IOPS écriture" value={iops(result.writeIops)} detail={`Pénalité ×${result.writePenalty}`} accent="purple" />
+        <Metric label="Résilience" value={<Stars value={result.resilience} />} detail={`${result.resilience}/5 · ${result.faultTolerance}`} accent="green" />
+        <Metric label="Brut installé" value={capacity(result.installedRawTiB, usePiB)} detail={`(${decimal(result.installedRawTB, usePiB)}) · ${result.hotSpareStatus}`} />
         <Metric label="Débit lecture" value={bandwidth(result.readBandwidthMBps)} detail="Séquentiel théorique" />
         <Metric label="Débit écriture" value={bandwidth(result.writeBandwidthMBps)} detail="Séquentiel théorique" accent="purple" />
+        <Metric label="Rendement installé" value={`${number(result.efficiencyInstalled, 1)} %`} detail={`${result.active} actifs + ${result.spares} spare${result.spares > 1 ? 's' : ''}`} /> 
       </div></section>
     
       <RaidDiagram raid={raid} diskCount={diskCount} hotSpares={hotSpares} groupCount={groupCount}/>

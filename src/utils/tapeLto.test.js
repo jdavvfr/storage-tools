@@ -68,12 +68,22 @@ test('uses native reference write rates or a valid custom rate', () => {
   assert.equal(calculateLtoWriteDurationSeconds(1, 'To', 'LTO-9', 200), 5_000)
 })
 
+test('models ideal linear write-rate scaling across readers', () => {
+  assert.equal(calculateLtoWriteDurationSeconds(1, 'To', 'LTO-9', undefined, 2), 1_250)
+  assert.equal(calculateLtoWriteDurationSeconds(1, 'To', 'LTO-9', 200, 4), 1_250)
+  assert.equal(calculateLtoWriteDurationSeconds(1, 'To', 'LTO-9', 200, 1), 5_000)
+})
+
 test('rejects invalid write duration inputs', () => {
   for (const args of [
     [0, 'To', 'LTO-7'],
     [1, 'To', 'LTO-6'],
     [1, 'To', 'LTO-7', 0],
     [1, 'To', 'LTO-7', Number.NaN],
+    [1, 'To', 'LTO-7', undefined, 0],
+    [1, 'To', 'LTO-7', undefined, -1],
+    [1, 'To', 'LTO-7', undefined, 1.5],
+    [1, 'To', 'LTO-7', undefined, Number.MAX_SAFE_INTEGER + 1],
   ]) {
     assert.ok(Number.isNaN(calculateLtoWriteDurationSeconds(...args)))
   }

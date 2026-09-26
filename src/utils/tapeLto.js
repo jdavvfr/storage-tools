@@ -42,9 +42,12 @@ export function calculateLtoTotalCartridges(cartridgesPerBackup, rotationSets) {
   return Number.isSafeInteger(total) ? total : Number.NaN
 }
 
-export function calculateLtoWriteDurationSeconds(volume, volumeUnit, generation, customThroughputMBps) {
+export function calculateLtoWriteDurationSeconds(volume, volumeUnit, generation, customThroughputMBps, readerCount = 1) {
   if (!Object.hasOwn(ltoGenerations, generation)) return Number.NaN
+  if (!Number.isSafeInteger(readerCount) || readerCount <= 0) return Number.NaN
   const lto = ltoGenerations[generation]
   const throughput = customThroughputMBps ?? lto.nativeThroughputMBps
-  return calculateCopyDurationSeconds(volume, volumeUnit, throughput, 'Mo/s')
+  const aggregateThroughput = throughput * readerCount
+  if (!Number.isFinite(aggregateThroughput)) return Number.NaN
+  return calculateCopyDurationSeconds(volume, volumeUnit, aggregateThroughput, 'Mo/s')
 }

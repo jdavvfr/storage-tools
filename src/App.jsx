@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { diskTypes } from './data/disks'
 import { buildRaidComparison, calculateRaid, raidDefinitions, tbToPB, tiBToPiB } from './utils/raidCalculations'
-import { GraphicalAbout, RaidDiagram } from './components/RaidEnhancements'
+import AboutSection from './components/AboutSection'
+import { RaidDiagram } from './components/RaidEnhancements'
 import CapacityConverter from './components/CapacityConverter'
 import CopyDurationEstimator from './components/CopyDurationEstimator'
 import './App.css'
@@ -92,7 +93,38 @@ function App() {
       <section className="panel"><Heading n="06" title="Comparaison RAID" badge="Même nombre de disques actifs" /><div className="table-wrap"><table><thead><tr><th>RAID</th><th>Capacité utile</th><th>Rendement installé</th><th>Débit écriture</th><th>Rebuild réaliste</th><th>Résilience</th></tr></thead><tbody>{comparison.filter(x => x.result.valid).map(x => <tr key={x.raid} className={x.raid === raid ? 'selected' : ''}><td><b>{x.definition.label}</b></td><td>{capacity(x.result.usableTiB, usePiB)}<small>({decimal(x.result.usableTB, usePiB)})</small></td><td>{number(x.result.efficiencyInstalled, 1)} %</td><td>{bandwidth(x.result.writeBandwidthMBps)}</td><td>{x.result.rebuild.realistic === null ? 'Non disponible' : duration(x.result.rebuild.realistic)}</td><td><Stars value={x.result.resilience} /></td></tr>)}</tbody></table></div></section>
     </>}
 
-    <GraphicalAbout supportedRaidCount={Object.keys(raidDefinitions).length} supportedDiskCount={Object.keys(diskTypes).length}/>
+    <AboutSection
+      eyebrow="À PROPOS DU CALCULATEUR"
+      title="Dimensionner un groupe RAID en quelques secondes"
+      description="Une lecture synthétique de la capacité, des performances, de la résilience et de la fenêtre de reconstruction."
+      items={[
+        {
+          icon: 'capacity',
+          label: 'Niveaux RAID',
+          value: Object.keys(raidDefinitions).length,
+          description: 'RAID 0, 1, 5, 6, 10, 50 et 60'
+        },
+        {
+          icon: 'performance',
+          label: 'Technologies disque',
+          value: Object.keys(diskTypes).length,
+          description: 'HDD SATA/SAS, SSD et NVMe'
+        },
+        {
+          icon: 'resilience',
+          label: 'Analyse',
+          value: '4 axes',
+          description: 'Capacité, débit, IOPS et tolérance aux pannes'
+        },
+        {
+          icon: 'rebuild',
+          label: 'Reconstruction',
+          value: '3 scénarios',
+          description: 'Optimiste, réaliste et dégradé'
+        }
+      ]}
+      highlights={['Calcul en TiB et PiB', 'Disques de secours', 'Comparaison RAID', '100 % navigateur']}
+    />
     </>}
   </main>
 }

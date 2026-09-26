@@ -100,6 +100,30 @@ body {
   box-shadow: 0 24px 70px #0004;
 }
 
+.section-intro {
+  position: relative;
+  max-width: 780px;
+}
+
+.section-intro > span {
+  color: #4fd1c5;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.section-intro h2 {
+  margin: 8px 0 10px;
+  font-size: clamp(1.45rem, 3vw, 2.15rem);
+  letter-spacing: -0.035em;
+}
+
+.section-intro p {
+  margin: 0;
+  color: #94a3b8;
+  line-height: 1.65;
+}
+
 .heading {
   display: flex;
   align-items: center;

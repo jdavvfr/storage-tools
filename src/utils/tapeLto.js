@@ -34,6 +34,14 @@ export function calculateLtoCartridges(volume, volumeUnit, generation, compresse
   return Number.isSafeInteger(cartridges) ? cartridges : Number.NaN
 }
 
+export function calculateLtoTotalCartridges(cartridgesPerBackup, rotationSets) {
+  if (!Number.isSafeInteger(cartridgesPerBackup) || cartridgesPerBackup <= 0 ||
+    !Number.isSafeInteger(rotationSets) || rotationSets <= 0) return Number.NaN
+
+  const total = cartridgesPerBackup * rotationSets
+  return Number.isSafeInteger(total) ? total : Number.NaN
+}
+
 export function calculateLtoWriteDurationSeconds(volume, volumeUnit, generation, customThroughputMBps) {
   if (!Object.hasOwn(ltoGenerations, generation)) return Number.NaN
   const lto = ltoGenerations[generation]

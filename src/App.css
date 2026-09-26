@@ -526,6 +526,25 @@ input[aria-invalid="true"] {
   margin-top: 30px;
 }
 
+.tape-lto-grid--options {
+  align-items: start;
+}
+
+.tape-lto-results {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tape-lto-results .copy-estimator-result {
+  min-width: 0;
+}
+
+.tape-lto-results .copy-estimator-result strong.tape-lto-result-error {
+  color: #ffb4be;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+}
+
 .lto-compression-option {
   display: flex;
   align-items: center;
@@ -767,6 +786,10 @@ footer strong {
   .tape-lto-grid {
     grid-template-columns: 1fr;
     gap: 18px;
+  }
+
+  .tape-lto-results {
+    grid-template-columns: 1fr;
   }
 
   .copy-estimator-input {

@@ -3,13 +3,13 @@ export const tiBToPiB = value => value / 1024
 export const tbToPB = value => value / 1000
 
 export const raidDefinitions = {
-  RAID0: { label: 'RAID 0', writePenalty: 1, minimumDisks: 2, resilience: 0, description: 'Bandes sans redondance', faultTolerance: 'Aucune panne' },
-  RAID1: { label: 'RAID 1', writePenalty: 2, minimumDisks: 2, resilience: 4, description: 'Miroir', faultTolerance: '1 panne par miroir' },
-  RAID5: { label: 'RAID 5', writePenalty: 4, minimumDisks: 3, resilience: 1, description: 'Parité simple distribuée', faultTolerance: '1 panne' },
-  RAID6: { label: 'RAID 6', writePenalty: 6, minimumDisks: 4, resilience: 3, description: 'Double parité distribuée', faultTolerance: '2 pannes' },
-  RAID10: { label: 'RAID 10', writePenalty: 2, minimumDisks: 4, resilience: 4, description: 'Agrégation de miroirs', faultTolerance: '1 panne par paire miroir' },
-  RAID50: { label: 'RAID 50', writePenalty: 4, minimumDisks: 6, resilience: 2, description: 'Groupes RAID 5 agrégés', faultTolerance: '1 panne par groupe' },
-  RAID60: { label: 'RAID 60', writePenalty: 6, minimumDisks: 8, resilience: 5, description: 'Groupes RAID 6 agrégés', faultTolerance: '2 pannes par groupe' },
+  RAID0: { label: 'RAID 0', writePenalty: 1, minimumDisks: 2, resilience: 0, description: 'Bandes sans redondance', faultTolerance: 'Aucune panne', rebuildSupported: false, rebuildContentionPerAdditionalDisk: 0 },
+  RAID1: { label: 'RAID 1', writePenalty: 2, minimumDisks: 2, resilience: 4, description: 'Miroir', faultTolerance: '1 panne par miroir', rebuildSupported: true, rebuildContentionPerAdditionalDisk: 0 },
+  RAID5: { label: 'RAID 5', writePenalty: 4, minimumDisks: 3, resilience: 1, description: 'Parité simple distribuée', faultTolerance: '1 panne', rebuildSupported: true, rebuildContentionPerAdditionalDisk: 0.08 },
+  RAID6: { label: 'RAID 6', writePenalty: 6, minimumDisks: 4, resilience: 3, description: 'Double parité distribuée', faultTolerance: '2 pannes', rebuildSupported: true, rebuildContentionPerAdditionalDisk: 0.12 },
+  RAID10: { label: 'RAID 10', writePenalty: 2, minimumDisks: 4, resilience: 4, description: 'Agrégation de miroirs', faultTolerance: '1 panne par paire miroir', rebuildSupported: true, rebuildContentionPerAdditionalDisk: 0 },
+  RAID50: { label: 'RAID 50', writePenalty: 4, minimumDisks: 6, resilience: 2, description: 'Groupes RAID 5 agrégés', faultTolerance: '1 panne par groupe', rebuildSupported: true, rebuildContentionPerAdditionalDisk: 0.08 },
+  RAID60: { label: 'RAID 60', writePenalty: 6, minimumDisks: 8, resilience: 5, description: 'Groupes RAID 6 agrégés', faultTolerance: '2 pannes par groupe', rebuildSupported: true, rebuildContentionPerAdditionalDisk: 0.12 },
 }
 
 export function calculateRaid({ raid, diskCount, hotSpares = 0, diskSizeTB, groupCount = 2, disk, rebuildLoad = 40 }) {
@@ -28,7 +28,9 @@ export function calculateRaid({ raid, diskCount, hotSpares = 0, diskSizeTB, grou
   const installedRawTB = installed * sizeTB
   const usableTB = usableDisks * sizeTB
   const baseHours = sizeTB * 1_000_000 / disk.rebuildMBps / 3600
-  const realisticHours = baseHours / Math.max(0.15, 1 - Number(rebuildLoad) / 100)
+  const affectedGroupSize = ['RAID50', 'RAID60'].includes(raid) ? active / groups : ['RAID1', 'RAID10'].includes(raid) ? 2 : active
+  const groupWorkloadFactor = 1 + Math.max(0, affectedGroupSize - 2) * definition.rebuildContentionPerAdditionalDisk
+  const realisticHours = baseHours / Math.max(0.15, 1 - Number(rebuildLoad) / 100) * groupWorkloadFactor
   const degradedHours = realisticHours / 0.65
 
   return {
@@ -45,9 +47,12 @@ export function calculateRaid({ raid, diskCount, hotSpares = 0, diskSizeTB, grou
     writePenalty: definition.writePenalty,
     faultTolerance: definition.faultTolerance,
     resilience: definition.resilience,
+    rebuildSupported: definition.rebuildSupported,
     groupCount: ['RAID50', 'RAID60'].includes(raid) ? groups : 1,
-    affectedGroupSize: ['RAID50', 'RAID60'].includes(raid) ? active / groups : ['RAID1', 'RAID10'].includes(raid) ? 2 : active,
-    rebuild: { optimistic: baseHours, realistic: realisticHours, degraded: degradedHours },
+    affectedGroupSize,
+    rebuild: definition.rebuildSupported
+      ? { optimistic: baseHours, realistic: realisticHours, degraded: degradedHours, groupWorkloadFactor }
+      : { optimistic: null, realistic: null, degraded: null, groupWorkloadFactor: null },
     hotSpareStatus: spares > 0 ? `${spares} hot spare${spares > 1 ? 's' : ''} disponible${spares > 1 ? 's' : ''}` : 'Aucun hot spare',
   }
 }

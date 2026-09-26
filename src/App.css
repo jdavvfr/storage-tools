@@ -530,6 +530,14 @@ input[aria-invalid="true"] {
   align-items: start;
 }
 
+.tape-lto-job-note {
+  align-self: center;
+  margin: 0;
+  color: #8fa4b9;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
 .tape-lto-results {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

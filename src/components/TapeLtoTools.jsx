@@ -26,6 +26,8 @@ export default function TapeLtoTools() {
   const [volumeUnit, setVolumeUnit] = useState('To')
   const [generation, setGeneration] = useState('LTO-9')
   const [compressed, setCompressed] = useState(false)
+  const [jobType, setJobType] = useState('vm')
+  const [readerCount, setReaderCount] = useState('1')
   const [rateMode, setRateMode] = useState('native')
   const [customRate, setCustomRate] = useState('')
   const [rotationSets, setRotationSets] = useState('1')
@@ -45,6 +47,15 @@ export default function TapeLtoTools() {
   const rateReady = rateMode === 'native' ||
     (Boolean(customRate.trim()) && !rateError)
 
+  const parsedReaderCount = parseCapacityInput(readerCount)
+  const readerCountError = jobType === 'vm' && readerCount.trim() &&
+    (!Number.isSafeInteger(parsedReaderCount) || parsedReaderCount <= 0)
+    ? 'Saisissez un nombre entier de lecteurs supérieur à 0.'
+    : ''
+  const readerCountReady = jobType === 'nas' ||
+    (Boolean(readerCount.trim()) && !readerCountError)
+  const effectiveReaderCount = jobType === 'vm' && readerCountReady ? parsedReaderCount : 1
+
   const parsedRotationSets = parseCapacityInput(rotationSets)
   const rotationSetsError = rotationSets.trim() &&
     (!Number.isSafeInteger(parsedRotationSets) || parsedRotationSets <= 0)
@@ -55,12 +66,13 @@ export default function TapeLtoTools() {
   const cartridgeCount = volumeReady
     ? calculateLtoCartridges(parsedVolume, volumeUnit, generation, compressed)
     : Number.NaN
-  const durationSeconds = volumeReady && rateReady
+  const durationSeconds = volumeReady && rateReady && readerCountReady
     ? calculateLtoWriteDurationSeconds(
       parsedVolume,
       volumeUnit,
       generation,
       rateMode === 'custom' ? parsedCustomRate : undefined,
+      effectiveReaderCount,
     )
     : Number.NaN
   const totalCartridgeCount = Number.isSafeInteger(cartridgeCount) && rotationSetsReady
@@ -121,6 +133,39 @@ export default function TapeLtoTools() {
         </p>
         <div className="tape-lto-grid tape-lto-grid--options">
           <div className="copy-estimator-field">
+            <label htmlFor="lto-job-type">Type de job</label>
+            <select
+              id="lto-job-type"
+              value={jobType}
+              onChange={event => {
+                setJobType(event.target.value)
+                if (event.target.value === 'nas') setReaderCount('1')
+              }}
+            >
+              <option value="vm">Externalisation de VM (parallélisable)</option>
+              <option value="nas">Job NAS (séquentiel)</option>
+            </select>
+            <small>Le type de job détermine si plusieurs lecteurs peuvent écrire en parallèle.</small>
+          </div>
+          {jobType === 'vm'
+            ? <div className="copy-estimator-field">
+              <label htmlFor="lto-reader-count">Nombre de lecteurs</label>
+              <input
+                id="lto-reader-count"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                value={readerCount}
+                onChange={event => setReaderCount(event.target.value)}
+                aria-invalid={Boolean(readerCountError)}
+                aria-describedby="lto-reader-count-help"
+              />
+              <small id="lto-reader-count-help" className={readerCountError ? 'field-error' : ''} role={readerCountError ? 'alert' : undefined}>
+                {readerCountError || 'Entrez le nombre de lecteurs d’écriture utilisés simultanément.'}
+              </small>
+            </div>
+            : <p className="tape-lto-job-note">Un job NAS utilise un seul lecteur ; la parallélisation n’est pas proposée.</p>}
+          <div className="copy-estimator-field">
             <label htmlFor="lto-rate-mode">Débit d’écriture</label>
             <select id="lto-rate-mode" value={rateMode} onChange={event => setRateMode(event.target.value)}>
               <option value="native">Débit natif ({ltoGenerations[generation].nativeThroughputMBps} Mo/s)</option>
@@ -174,7 +219,7 @@ export default function TapeLtoTools() {
               <span>Durée d’écriture estimée</span>
               {Number.isFinite(durationSeconds)
                 ? <strong>{formatCopyDuration(durationSeconds)}</strong>
-                : <strong className="tape-lto-result-error">{rateReady ? 'Durée trop grande à représenter' : 'Débit à renseigner'}</strong>}
+                : <strong className="tape-lto-result-error">{!rateReady ? 'Débit à renseigner' : !readerCountReady ? 'Nombre de lecteurs à renseigner' : 'Durée trop grande à représenter'}</strong>}
             </div>
             <div className="copy-estimator-result">
               <span>Total à acquérir pour {rotationSetsReady ? formatNumber(parsedRotationSets) : '—'} jeux/cycles</span>
@@ -185,7 +230,10 @@ export default function TapeLtoTools() {
           </div>
         )}
         <p className="copy-estimator-note">
-          La durée utilise le volume saisi et le débit natif ou personnalisé ; l’hypothèse de compression ne modifie que le calcul de capacité. Elle suppose un débit constant et exclut les temps de montage, les changements de cartouche, les ralentissements, le protocole et les autres activités du système.
+          {jobType === 'vm'
+            ? `Pour l’externalisation de VM, la durée suppose une répartition équilibrée et une accélération idéale linéaire : débit total = débit d’un lecteur × ${readerCountReady ? formatNumber(effectiveReaderCount) : 'nombre de lecteurs'}.`
+            : 'Pour un job NAS, la durée est calculée avec un seul lecteur, sans parallélisation.'}
+          {' '}La capacité et les cartouches restent calculées sur le volume total, sans multiplication par le nombre de lecteurs. L’hypothèse de compression ne modifie que le calcul de capacité. L’estimation suppose un débit constant et exclut les temps de montage, les changements de cartouche, les ralentissements, le protocole et les autres activités du système.
         </p>
       </section>
       <AboutSection
@@ -195,11 +243,11 @@ export default function TapeLtoTools() {
         description="Un calculateur réunit capacité, durée d’écriture et nombre de jeux/cycles identiques à conserver."
         items={[
           { icon: 'capacity', label: 'Générations', value: 'LTO-7 à LTO-9', description: 'Capacités natives de 6, 12 et 18 To par cartouche.' },
-          { icon: 'performance', label: 'Débits natifs', value: '300 à 400 Mo/s', description: 'Débits de référence selon la génération, sans compression.' },
+          { icon: 'performance', label: 'Débits natifs', value: '300 à 400 Mo/s', description: 'Références par lecteur ; VM : accélération idéale linéaire, NAS : un lecteur.' },
           { icon: 'resilience', label: 'Compression', value: `${LTO_COMPRESSION_RATIO}:1 estimé`, description: 'Hypothèse théorique non garantie, dépendante du contenu des données.' },
           { icon: 'rebuild', label: 'Rotation', value: 'Jeux/cycles identiques', description: 'Le total est le nombre de cartouches par sauvegarde multiplié par le nombre de jeux à conserver ; aucun schéma GFS n’est supposé.' },
         ]}
-        highlights={['Arrondi au nombre de cartouches supérieur', 'Débit natif ou personnalisé', 'Aucune donnée envoyée']}
+        highlights={['Arrondi au nombre de cartouches supérieur', 'Parallélisation VM, NAS monolecteur', 'Aucune donnée envoyée']}
       />
     </>
   )

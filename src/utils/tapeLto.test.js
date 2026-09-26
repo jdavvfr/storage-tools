@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   calculateLtoCartridges,
+  calculateLtoTotalCartridges,
   calculateLtoWriteDurationSeconds,
   LTO_COMPRESSION_RATIO,
   ltoGenerations,
@@ -27,6 +28,24 @@ test('rounds cartridge requirements up and applies the stated compression ratio'
 test('converts binary and decimal volume units for cartridge calculations', () => {
   assert.equal(calculateLtoCartridges(6_000, 'GiB', 'LTO-7'), 2)
   assert.equal(calculateLtoCartridges(1, 'TiB', 'LTO-9'), 1)
+})
+
+test('multiplies a complete backup cartridge count by identical rotation sets', () => {
+  assert.equal(calculateLtoTotalCartridges(4, 3), 12)
+  assert.equal(calculateLtoTotalCartridges(1, 1), 1)
+})
+
+test('rejects invalid or unrepresentably large rotation totals', () => {
+  for (const args of [
+    [0, 1],
+    [1, 0],
+    [-1, 2],
+    [1, 1.5],
+    [Number.NaN, 2],
+    [Number.MAX_SAFE_INTEGER, 2],
+  ]) {
+    assert.ok(Number.isNaN(calculateLtoTotalCartridges(...args)))
+  }
 })
 
 test('rejects invalid, non-positive, and unrepresentably large capacity inputs', () => {

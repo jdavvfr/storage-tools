@@ -66,7 +66,7 @@ export default function VolumeGrowthCalculator() {
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="Ex. 12,5"
+                placeholder="Volume source"
                 value={sourceVolume}
                 onChange={event => setSourceVolume(event.target.value)}
                 aria-invalid={Boolean(sourceVolumeError)}
@@ -96,7 +96,7 @@ export default function VolumeGrowthCalculator() {
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="Ex. 5"
+                placeholder="Taux de croissance annuel"
                 value={annualGrowthRate}
                 onChange={event => setAnnualGrowthRate(event.target.value)}
                 aria-invalid={Boolean(growthRateError)}
@@ -120,7 +120,7 @@ export default function VolumeGrowthCalculator() {
                 type="text"
                 inputMode="numeric"
                 autoComplete="off"
-                placeholder="Ex. 5"
+                placeholder="Nombre d'années"
                 value={years}
                 onChange={event => setYears(event.target.value)}
                 aria-invalid={Boolean(yearsError)}

@@ -13,8 +13,8 @@ const volumeUnits = [
 ]
 
 const throughputUnits = [
-  ['Mo/s', 'Mo/s déc.'],
-  ['Go/s', 'Go/s déc.'],
+  ['Mo/s', 'Mo/s'],
+  ['Go/s', 'Go/s'],
   ['Mbit/s', 'Mbit/s'],
   ['Gbit/s', 'Gbit/s'],
 ]
@@ -59,7 +59,7 @@ export default function CopyDurationEstimator() {
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="Ex. 12,5"
+                placeholder="Volume de données"
                 value={volume}
                 onChange={event => setVolume(event.target.value)}
                 aria-invalid={Boolean(volumeError)}
@@ -89,7 +89,7 @@ export default function CopyDurationEstimator() {
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="Ex. 125"
+                placeholder="Débit de transfert"
                 value={throughput}
                 onChange={event => setThroughput(event.target.value)}
                 aria-invalid={Boolean(throughputError)}

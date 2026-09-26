@@ -65,7 +65,7 @@ export default function CapacityConverter() {
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="Ex. 1000,5"
+                placeholder="Capacité To"
                 value={values.tb}
                 onChange={event => updateValue('tb', event.target.value)}
                 aria-invalid={invalidField === 'tb'}
@@ -84,7 +84,7 @@ export default function CapacityConverter() {
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="Ex. 931,3226"
+                placeholder="Capacité TiB"
                 value={values.tib}
                 onChange={event => updateValue('tib', event.target.value)}
                 aria-invalid={invalidField === 'tib'}

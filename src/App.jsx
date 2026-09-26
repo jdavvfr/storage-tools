@@ -3,6 +3,7 @@ import { diskTypes } from './data/disks'
 import { buildRaidComparison, calculateRaid, raidDefinitions, tbToPB, tiBToPiB } from './utils/raidCalculations'
 import { GraphicalAbout, RaidDiagram } from './components/RaidEnhancements'
 import CapacityConverter from './components/CapacityConverter'
+import CopyDurationEstimator from './components/CopyDurationEstimator'
 import './App.css'
 
 const number = (v, d = 0) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: d }).format(v || 0)
@@ -40,9 +41,10 @@ function App() {
     <nav className="tool-navigation" aria-label="Outils de stockage">
       <button type="button" className={activeTool === 'raid' ? 'active' : ''} aria-current={activeTool === 'raid' ? 'page' : undefined} onClick={() => setActiveTool('raid')}>RAID Calculator</button>
       <button type="button" className={activeTool === 'converter' ? 'active' : ''} aria-current={activeTool === 'converter' ? 'page' : undefined} onClick={() => setActiveTool('converter')}>Convertisseur To / TiB</button>
+      <button type="button" className={activeTool === 'copy' ? 'active' : ''} aria-current={activeTool === 'copy' ? 'page' : undefined} onClick={() => setActiveTool('copy')}>Durée de copie</button>
     </nav>
-    <header className="hero"><span>STORAGE TOOLS</span><h1>{activeTool === 'raid' ? 'RAID Calculator' : 'Convertisseur To / TiB'}</h1><p>{activeTool === 'raid' ? 'Dimensionnement d’un RAID matériel pour serveur capacitif' : 'Conversion rapide entre capacités décimales et binaires'}</p></header>
-    {activeTool === 'converter' ? <CapacityConverter /> : <>
+    <header className="hero"><span>STORAGE TOOLS</span><h1>{activeTool === 'raid' ? 'RAID Calculator' : activeTool === 'converter' ? 'Convertisseur To / TiB' : 'Durée de copie'}</h1><p>{activeTool === 'raid' ? 'Dimensionnement d’un RAID matériel pour serveur capacitif' : activeTool === 'converter' ? 'Conversion rapide entre capacités décimales et binaires' : 'Estimation du temps nécessaire pour transférer un volume de données'}</p></header>
+    {activeTool === 'copy' ? <CopyDurationEstimator /> : activeTool === 'converter' ? <CapacityConverter /> : <>
     <section className="workspace">
       <article className="panel"><Heading n="01" title="Configuration RAID" badge={definition?.label || 'À configurer'} /><div className="form-grid">
         <label><span>Type de disque</span><select value={diskType} onChange={e => setDiskType(e.target.value)}><option value="">Sélectionner un type de disque</option>{Object.keys(diskTypes).map(x => <option key={x}>{x}</option>)}</select></label>

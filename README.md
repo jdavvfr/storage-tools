@@ -1,13 +1,13 @@
 # Storage Tools
 
-Free online Storage Tools
+Free online storage tools for capacity planning.
 
-RAID calculator.
-- RAID Capacity Calculation
-- Hot spare sizing
-- Rebuild estimation
-- Storage efficiency
-- TiB / PiB conversion
+## Available tools
+
+- RAID calculator: usable capacity, hot spare sizing, rebuild estimates, storage efficiency, and RAID-level comparisons.
+- To / TiB converter: bidirectional conversion between decimal terabytes (To) and binary tebibytes (TiB). It accepts a comma or point as the decimal separator.
+
+The converter uses the same capacity convention as the RAID calculator: 1 To = 1,000,000,000,000 bytes and 1 TiB = 1,099,511,627,776 bytes.
 
 ## Rebuild estimate assumptions
 

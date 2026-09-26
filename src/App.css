@@ -22,6 +22,47 @@ body {
   padding: 46px 0;
 }
 
+.tool-navigation {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 30px;
+  padding: 6px;
+  overflow-x: auto;
+  border: 1px solid #203252;
+  border-radius: 15px;
+  background: #0b1728cc;
+}
+
+.tool-navigation button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #91a3b8;
+  background: transparent;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tool-navigation button:hover {
+  color: #e8edf5;
+  background: #14243a;
+}
+
+.tool-navigation button:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.tool-navigation button.active {
+  border-color: #28506a;
+  color: #5eead4;
+  background: #123045;
+}
+
 .hero {
   margin-bottom: 28px;
 }
@@ -143,6 +184,10 @@ input:focus,
 select:focus {
   border-color: #38bdf8;
   box-shadow: 0 0 0 3px #38bdf81f;
+}
+
+input[aria-invalid="true"] {
+  border-color: #ef6677;
 }
 
 .input-unit {
@@ -393,6 +438,52 @@ select:focus {
   border-radius: 16px;
 }
 
+.converter {
+  max-width: 1000px;
+  margin: 0 auto 22px;
+}
+
+.converter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 22px;
+  margin-top: 30px;
+}
+
+.converter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.converter-field > span {
+  color: #c3d1e2;
+  font-weight: 700;
+}
+
+.converter-field small {
+  color: #74859b;
+}
+
+.converter-equals {
+  color: #5eead4;
+  font-size: 1.8rem;
+}
+
+.converter-note {
+  margin: 28px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid #203252;
+  color: #8fa4b9;
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.converter-error {
+  margin-bottom: 0;
+}
+
 table {
   width: 100%;
   min-width: 950px;
@@ -472,6 +563,16 @@ footer strong {
   .metrics,
   .rebuild-grid {
     grid-template-columns: 1fr;
+  }
+
+  .converter-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .converter-equals {
+    justify-self: center;
+    transform: rotate(90deg);
   }
 
   .form-grid .wide {

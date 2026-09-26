@@ -1,6 +1,16 @@
-const TB_TO_TIB = 1_000_000_000_000 / 1_099_511_627_776
+export const TB_TO_TIB = 1_000_000_000_000 / 1_099_511_627_776
+export const tbToTiB = value => value * TB_TO_TIB
+export const tiBToTB = value => value / TB_TO_TIB
 export const tiBToPiB = value => value / 1024
 export const tbToPB = value => value / 1000
+
+export function parseCapacityInput(value) {
+  const input = String(value).trim()
+  if (!input) return null
+  if (!/^(?:\d+(?:[.,]\d*)?|[.,]\d+)$/.test(input)) return Number.NaN
+  const parsed = Number(input.replace(',', '.'))
+  return Number.isFinite(parsed) ? parsed : Number.NaN
+}
 
 export const raidDefinitions = {
   RAID0: { label: 'RAID 0', writePenalty: 1, minimumDisks: 2, resilience: 0, description: 'Bandes sans redondance', faultTolerance: 'Aucune panne', rebuildSupported: false, rebuildContentionPerAdditionalDisk: 0 },
@@ -35,9 +45,9 @@ export function calculateRaid({ raid, diskCount, hotSpares = 0, diskSizeTB, grou
 
   return {
     ready: true, valid: true, active, spares, installed, usableDisks,
-    activeRawTB, activeRawTiB: activeRawTB * TB_TO_TIB,
-    installedRawTB, installedRawTiB: installedRawTB * TB_TO_TIB,
-    usableTB, usableTiB: usableTB * TB_TO_TIB,
+    activeRawTB, activeRawTiB: tbToTiB(activeRawTB),
+    installedRawTB, installedRawTiB: tbToTiB(installedRawTB),
+    usableTB, usableTiB: tbToTiB(usableTB),
     efficiencyActive: usableDisks / active * 100,
     efficiencyInstalled: usableDisks / installed * 100,
     readIops: active * disk.readIops,

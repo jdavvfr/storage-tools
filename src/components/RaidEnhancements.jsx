@@ -28,7 +28,7 @@ export function GraphicalAbout({ supportedRaidCount = 7, supportedDiskCount = 0 
   return <section className="panel graphical-about" aria-labelledby="about-title">
     <div className="section-intro">
       <span>À PROPOS DE L’OUTIL</span>
-      <h2 id="about-title">Dimensionner un RAID serveur en quelques secondes</h2>
+      <h2 id="about-title">Dimensionner un Group RAID en quelques secondes</h2>
       <p>Une lecture synthétique de la capacité, des performances, de la résilience et de la fenêtre de reconstruction</p>
     </div>
     <div className="about-grid">

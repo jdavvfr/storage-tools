@@ -1,20 +1,9 @@
-# RAID Calculator
+# Storage Tools
 
-Free online RAID calculator.
+Free online Storage Tools
 
-Supported RAID levels:
-
-- RAID 0
-- RAID 1
-- RAID 5
-- RAID 6
-- RAID 10
-- RAID 50
-- RAID 60
-
-Features:
-
-- Capacity calculation
+RAID calculator.
+- RAID Capacity Calculation
 - Hot spare sizing
 - Rebuild estimation
 - Storage efficiency
@@ -22,4 +11,4 @@ Features:
 
 Online tool:
 
-https://djejedu13.github.io/raid-calculator/
+https://djavvfr.github.io/storage-tools/

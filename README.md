@@ -9,6 +9,4 @@ RAID calculator.
 - Storage efficiency
 - TiB / PiB conversion
 
-Online tool:
-
-https://djavvfr.github.io/storage-tools/
+Online tool : https://jdavvfr.github.io/storage-tools/

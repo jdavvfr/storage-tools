@@ -4,15 +4,12 @@ import { calculateVolumeGrowth } from '../utils/volumeGrowth'
 import AboutSection from './AboutSection'
 
 const volumeUnits = [
-  ['o', 'o'],
-  ['ko', 'ko (déc.)'],
-  ['Mo', 'Mo (déc.)'],
-  ['Go', 'Go (déc.)'],
-  ['To', 'To (déc.)'],
-  ['KiB', 'KiB (bin.)'],
-  ['MiB', 'MiB (bin.)'],
-  ['GiB', 'GiB (bin.)'],
-  ['TiB', 'TiB (bin.)'],
+  ['Go', 'Go'],
+  ['To', 'To'],
+  ['Po', 'Po'],
+  ['GiB', 'GiB'],
+  ['TiB', 'TiB'],
+  ['PiB', 'PiB'],
 ]
 
 const formatVolume = value => new Intl.NumberFormat('fr-FR', {
@@ -160,8 +157,8 @@ export default function VolumeGrowthCalculator() {
           {
             icon: 'capacity',
             label: 'Volume',
-            value: '9 unités',
-            description: 'Saisissez un volume en o, ko, Mo, Go, To, KiB, MiB, GiB ou TiB.'
+            value: '6 unités',
+            description: 'Saisissez un volume en Go, To, Po, GiB, TiB ou PiB.'
           },
           {
             icon: 'performance',

@@ -4,26 +4,17 @@ import { calculateCopyDurationSeconds, formatCopyDuration } from '../utils/copyD
 import AboutSection from './AboutSection'
 
 const volumeUnits = [
-  ['o', 'o'],
-  ['ko', 'ko (déc.)'],
-  ['Mo', 'Mo (déc.)'],
-  ['Go', 'Go (déc.)'],
-  ['To', 'To (déc.)'],
-  ['KiB', 'KiB (bin.)'],
-  ['MiB', 'MiB (bin.)'],
-  ['GiB', 'GiB (bin.)'],
-  ['TiB', 'TiB (bin.)'],
+  ['Go', 'Go'],
+  ['To', 'To'],
+  ['Po', 'Po'],
+  ['GiB', 'GiB'],
+  ['TiB', 'TiB'],
+  ['PiB', 'PiB'],
 ]
 
 const throughputUnits = [
-  ['ko/s', 'ko/s déc.'],
   ['Mo/s', 'Mo/s déc.'],
   ['Go/s', 'Go/s déc.'],
-  ['To/s', 'To/s déc.'],
-  ['KiB/s', 'KiB/s bin.'],
-  ['MiB/s', 'MiB/s bin.'],
-  ['GiB/s', 'GiB/s bin.'],
-  ['TiB/s', 'TiB/s bin.'],
   ['Mbit/s', 'Mbit/s'],
   ['Gbit/s', 'Gbit/s'],
 ]
@@ -87,7 +78,7 @@ export default function CopyDurationEstimator() {
               className={volumeError ? 'field-error' : ''}
               role={volumeError ? 'alert' : undefined}
             >
-              {volumeError || 'Les unités To/Go/Mo sont décimales ; TiB/GiB/MiB sont binaires.'}
+              {volumeError || 'Les unités Go/Mo sont décimales ; GiB/MiB sont binaires.'}
             </small>
           </div>
           <div className="copy-estimator-field">
@@ -141,13 +132,13 @@ export default function CopyDurationEstimator() {
           {
             icon: 'capacity',
             label: 'Volume',
-            value: '9 unités',
-            description: 'Saisissez des octets, ko, Mo, Go, To, KiB, MiB, GiB ou TiB.'
+            value: '4 unités',
+            description: 'Saisissez des octets Mo, Go, MiB ou GiB.'
           },
           {
             icon: 'performance',
             label: 'Débit',
-            value: '10 unités',
+            value: '4 unités',
             description: 'Choisissez un débit en octets par seconde ou en bits par seconde.'
           },
           {

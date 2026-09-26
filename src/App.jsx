@@ -61,7 +61,7 @@ function App() {
     {result.valid && <>
       <section className="panel"><Heading n="03" title="Capacité et performances" badge={<label className="pib-check"><input type="checkbox" checked={usePiB} onChange={e => setUsePiB(e.target.checked)} /> PiB</label>} /><div className="metrics">
         <Metric label="Capacité utile" value={capacity(result.usableTiB, usePiB)} detail={`(${decimal(result.usableTB, usePiB)})`} accent="cyan" />
-        <Metric label="IOPS lecture" value={iops(result.readIopsIops)}accent="purple" />
+        <Metric label="IOPS lecture" value={iops(result.readIops)}accent="purple" />
         <Metric label="IOPS écriture" value={iops(result.writeIops)} detail={`Pénalité ×${result.writePenalty}`} accent="purple" />
         <Metric label="Résilience" value={<Stars value={result.resilience} />} detail={`${result.resilience}/5 · ${result.faultTolerance}`} accent="green" />
         <Metric label="Brut installé" value={capacity(result.installedRawTiB, usePiB)} detail={`(${decimal(result.installedRawTB, usePiB)}) · ${result.hotSpareStatus}`} />

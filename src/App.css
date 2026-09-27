@@ -85,19 +85,30 @@ body {
   color: #94a3b8;
 }
 
-.workspace {
-  display: grid;
-  grid-template-columns: 1.45fr 0.85fr;
-  gap: 22px;
-}
-
-.raid-controls {
+.raid-layout {
   display: grid;
   gap: 22px;
+  margin-bottom: 34px;
 }
 
-.raid-controls > .panel {
+.raid-parameter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.85fr);
+  gap: 22px;
+  align-items: stretch;
+}
+
+.raid-layout--advanced .raid-parameter-grid {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+
+.raid-parameter-grid > .panel,
+.raid-disk-panel {
   margin-bottom: 0;
+}
+
+.raid-disk-panel .disk-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .panel {
@@ -512,6 +523,19 @@ input[aria-invalid="true"] {
   border-radius: 16px;
 }
 
+.raid-comparison__row {
+  cursor: pointer;
+}
+
+.raid-comparison__row:hover {
+  background: #173653;
+}
+
+.raid-comparison__row:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: -2px;
+}
+
 .converter {
   max-width: 1000px;
   margin: 0 auto 22px;
@@ -800,7 +824,8 @@ footer strong {
 }
 
 @media (max-width: 1050px) {
-  .workspace {
+  .raid-parameter-grid,
+  .raid-layout--advanced .raid-parameter-grid {
     grid-template-columns: 1fr;
   }
 
@@ -821,6 +846,7 @@ footer strong {
 
   .form-grid,
   .disk-grid,
+  .raid-disk-panel .disk-grid,
   .metrics,
   .rebuild-grid {
     grid-template-columns: 1fr;

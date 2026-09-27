@@ -63,7 +63,7 @@ function Disk({ type, label }) {
   )
 }
 
-export function RaidDiagram({ raid, diskCount, hotSpares = 0, groupCount = 2 }) {
+export function RaidDiagram({ raid, diskCount, hotSpares = 0, groupCount = 2, sectionNumber = '04' }) {
   const active = Math.max(0, Number(diskCount) || 0)
   const spares = Math.max(0, Number(hotSpares) || 0)
   const groups = raidLayout(raid, active, groupCount)
@@ -74,10 +74,10 @@ export function RaidDiagram({ raid, diskCount, hotSpares = 0, groupCount = 2 }) 
     <section className="panel raid-visual" aria-labelledby="raid-visual-title">
       <div className="heading raid-visual__heading">
         <div>
-          <span>04</span>
-          <h2 id="raid-visual-title">Organisation du RAID</h2>
+          <span>{sectionNumber}</span>
+          <h2 id="raid-visual-title">Organisation RAID</h2>
         </div>
-        <b>{active} disques actifs</b>
+        <b>{raid} · {active} disques actifs</b>
       </div>
       <div className="raid-groups">
         {groups.map(group => (

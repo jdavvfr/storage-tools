@@ -98,19 +98,7 @@ export default function RaidCalculator({ active = true }) {
     </section>
 
     {result.valid && <>
-      <section className="panel"><Heading n="03" title="Capacité et performances" badge={<label className="pib-check"><input type="checkbox" checked={usePiB} onChange={e => setUsePiB(e.target.checked)} /> PiB</label>} /><div className="metrics">
-        <Metric label="Capacité utile" value={capacity(result.usableTiB, usePiB)} detail={`(${decimal(result.usableTB, usePiB)})`} accent="cyan" />
-        {calculateIops && <>
-          <Metric label="IOPS lecture logiques" value={formatIops(result.readIops)} detail={`${number(result.readPercent)} % de la charge`} accent="purple" />
-          <Metric label="IOPS écriture logiques" value={formatIops(result.writeIops)} detail={`${number(result.writePercent)} % · coût ${number(result.ioCosts.writeReads, 1)} lectures + ${number(result.ioCosts.writeWrites, 1)} écritures physiques`} accent="purple" />
-          <Metric label="IOPS logiques totales estimées" value={formatIops(result.totalIops)} detail={`${accessPattern === 'random' ? 'Aléatoire' : 'Séquentiel'} · blocs ${blockSizeKiB} KiB`} accent="purple" />
-        </>}
-        <Metric label="Résilience" value={<Stars value={result.resilience} />} detail={`${result.resilience}/5 · ${result.faultTolerance}`} accent="green" />
-        <Metric label="Brut installé" value={capacity(result.installedRawTiB, usePiB)} detail={`(${decimal(result.installedRawTB, usePiB)}) · ${result.hotSpareStatus}`} />
-        <Metric label="Débit lecture" value={bandwidth(result.readBandwidthMBps)} detail="Séquentiel théorique" />
-        <Metric label="Débit écriture" value={bandwidth(result.writeBandwidthMBps)} detail="Séquentiel théorique" accent="purple" />
-        <Metric label="Rendement installé" value={`${number(result.efficiencyInstalled, 1)} %`} detail={`${result.active} actifs + ${result.spares} spare${result.spares > 1 ? 's' : ''}`} />
-      </div></section>
+      <section className="panel"><Heading n="03" title="Comparaison RAID" badge={calculateIops ? `${readPercent} % lecture · ${100 - readPercent} % écriture` : 'Capacité'} /><div className="table-wrap"><table><thead><tr><th>RAID</th><th>Capacité utile</th><th>Rendement installé</th>{calculateIops && <><th>IOPS lecture estimées</th><th>IOPS écriture estimées</th></>}<th>Débit écriture</th>{calculateRebuild && <th>Rebuild réaliste</th>}<th>Résilience</th></tr></thead><tbody>{comparison.filter(x => x.result.valid).map(x => <tr key={x.raid} className={x.raid === raid ? 'selected' : ''}><td><b>{x.definition.label}</b></td><td>{capacity(x.result.usableTiB, usePiB)}<small>({decimal(x.result.usableTB, usePiB)})</small></td><td>{number(x.result.efficiencyInstalled, 1)} %</td>{calculateIops && <><td>{formatIops(x.result.readIops)}</td><td>{formatIops(x.result.writeIops)}</td></>}<td>{bandwidth(x.result.writeBandwidthMBps)}</td>{calculateRebuild && <td>{x.result.rebuild.realistic === null ? 'Non disponible' : duration(x.result.rebuild.realistic)}</td>}<td><Stars value={x.result.resilience} /></td></tr>)}</tbody></table></div>{calculateIops && <p className="profile-sum">Les IOPS de ce tableau utilisent le profil sélectionné, le bloc de {blockSizeKiB} KiB et les coûts physiques propres à chaque niveau RAID.</p>}</section>
 
       <RaidDiagram raid={raid} diskCount={diskCount} hotSpares={hotSpares} groupCount={groupCount}/>
 
@@ -128,7 +116,6 @@ export default function RaidCalculator({ active = true }) {
         {calculateRebuild && <>Pour la reconstruction, temps nominal = capacité / débit retenu ; le scénario réaliste applique la charge saisie et ajoute 8 % (RAID 5/50) ou 12 % (RAID 6/60) de contention par membre du domaine au-delà de 2. Le scénario dégradé ajoute 35 % au temps réaliste. RAID 0 ne peut pas reconstruire un disque. Ces facteurs ne sont pas des garanties : contrôleur, firmware, priorité, erreurs de lecture et E/S réelles peuvent fortement modifier les durées.</>}
       </span></footer>}
 
-      <section className="panel"><Heading n="06" title="Comparaison RAID" badge={calculateIops ? `${readPercent} % lecture · ${100 - readPercent} % écriture` : 'Capacité'} /><div className="table-wrap"><table><thead><tr><th>RAID</th><th>Capacité utile</th><th>Rendement installé</th>{calculateIops && <><th>IOPS lecture estimées</th><th>IOPS écriture estimées</th></>}<th>Débit écriture</th>{calculateRebuild && <th>Rebuild réaliste</th>}<th>Résilience</th></tr></thead><tbody>{comparison.filter(x => x.result.valid).map(x => <tr key={x.raid} className={x.raid === raid ? 'selected' : ''}><td><b>{x.definition.label}</b></td><td>{capacity(x.result.usableTiB, usePiB)}<small>({decimal(x.result.usableTB, usePiB)})</small></td><td>{number(x.result.efficiencyInstalled, 1)} %</td>{calculateIops && <><td>{formatIops(x.result.readIops)}</td><td>{formatIops(x.result.writeIops)}</td></>}<td>{bandwidth(x.result.writeBandwidthMBps)}</td>{calculateRebuild && <td>{x.result.rebuild.realistic === null ? 'Non disponible' : duration(x.result.rebuild.realistic)}</td>}<td><Stars value={x.result.resilience} /></td></tr>)}</tbody></table></div>{calculateIops && <p className="profile-sum">Les IOPS de ce tableau utilisent le profil sélectionné, le bloc de {blockSizeKiB} KiB et les coûts physiques propres à chaque niveau RAID.</p>}</section>
     </>}
 
     <AboutSection

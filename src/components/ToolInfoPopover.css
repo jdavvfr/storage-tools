@@ -32,9 +32,11 @@
 }
 
 .tool-info__popover {
-  width: min(680px, calc(100vw - 40px));
+  width: min(920px, calc(100vw - 40px));
+  max-height: min(70vh, 680px);
   margin-top: 12px;
   padding: 18px 20px;
+  overflow-y: auto;
   border: 1px solid #315375;
   border-radius: 15px;
   background: #0b1728;
@@ -53,8 +55,36 @@
 }
 
 .tool-info__popover h2 {
-  margin: 7px 0;
-  font-size: 1.1rem;
+  margin: 5px 0 16px;
+  font-size: 1.2rem;
+}
+
+.tool-info__sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.tool-info__sections > section {
+  min-width: 0;
+  padding-top: 14px;
+  border-top: 1px solid #203252;
+}
+
+.tool-info__sections h3 {
+  margin: 0 0 12px;
+  color: #5eead4;
+  font-size: 0.95rem;
+}
+
+.tool-info__sections article + article {
+  margin-top: 14px;
+}
+
+.tool-info__sections h4 {
+  margin: 0 0 4px;
+  color: #d6e0ed;
+  font-size: 0.85rem;
 }
 
 .tool-info__popover p {
@@ -65,7 +95,12 @@
 
 @media (max-width: 750px) {
   .tool-info__popover {
-    width: min(680px, calc(100vw - 24px));
+    width: min(920px, calc(100vw - 24px));
     padding: 16px;
+  }
+
+  .tool-info__sections {
+    grid-template-columns: 1fr;
+    gap: 14px;
   }
 }

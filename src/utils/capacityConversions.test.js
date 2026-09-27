@@ -19,6 +19,16 @@ test('parses French and international decimal separators', () => {
   assert.equal(parseCapacityInput(''), null)
 })
 
+test('accepts formatted conversion results with a French decimal separator', () => {
+  const formattedTiB = new Intl.NumberFormat('fr-FR', {
+    maximumFractionDigits: 12,
+    useGrouping: false
+  }).format(tbToTiB(20))
+
+  assert.equal(formattedTiB, '18,189894035458')
+  assert.equal(parseCapacityInput(formattedTiB), tbToTiB(20))
+})
+
 test('rejects negative, malformed, and non-finite capacity values', () => {
   for (const input of ['-1', '1,2.3', '1 000', 'Infinity', '1e9']) {
     assert.ok(Number.isNaN(parseCapacityInput(input)), `${input} should be rejected`)

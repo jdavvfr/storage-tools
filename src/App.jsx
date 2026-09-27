@@ -28,18 +28,19 @@ function App() {
   return <main className="shell">
     <div className="language-bar">
       <span className="visually-hidden" id="language-label">{language === 'fr' ? 'Langue : français' : 'Language: English'}</span>
+      <img className={`language-flag${language === 'fr' ? ' language-flag--active' : ''}`} src={frenchFlag} alt="" aria-hidden="true" />
       <button
         type="button"
         className="language-switch"
         role="switch"
         aria-checked={language === 'en'}
         aria-labelledby="language-label"
+      
         onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
       >
         <span className={`language-switch__thumb${language === 'en' ? ' language-switch__thumb--right' : ''}`} />
       </button>
       <img className={`language-flag${language === 'en' ? ' language-flag--active' : ''}`} src={englishFlag} alt="" aria-hidden="true" />
-      <img className={`language-flag${language === 'fr' ? ' language-flag--active' : ''}`} src={frenchFlag} alt="" aria-hidden="true" />
     </div>
     <nav className="tool-navigation" aria-label={t('Outils de stockage')}>
       <button type="button" className={activeTool === 'raid' ? 'active' : ''} aria-current={activeTool === 'raid' ? 'page' : undefined} onClick={() => setActiveTool('raid')}>{t('RAID Calculator Basic')}</button>

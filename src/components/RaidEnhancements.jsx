@@ -1,4 +1,5 @@
 import './RaidEnhancements.css'
+import { getRaidGridConfig } from '../utils/raidGrid'
 
 const RAID_COLORS = {
   data: '#38bdf8',
@@ -67,6 +68,7 @@ export function RaidDiagram({ raid, diskCount, hotSpares = 0, groupCount = 2, se
   const active = Math.max(0, Number(diskCount) || 0)
   const spares = Math.max(0, Number(hotSpares) || 0)
   const groups = raidLayout(raid, active, groupCount)
+  const grid = getRaidGridConfig(raid, groups)
 
   if (!raid || active <= 0) return null
 
@@ -79,7 +81,7 @@ export function RaidDiagram({ raid, diskCount, hotSpares = 0, groupCount = 2, se
         </div>
         <b>{raid} · {active} disques actifs</b>
       </div>
-      <div className="raid-groups">
+      <div className={`raid-groups ${grid.className}`} style={grid.style}>
         {groups.map(group => (
           <article className="raid-group" key={group.name}>
             <header>

@@ -152,3 +152,22 @@
     height: 56px;
   }
 }
+
+.raid-groups--raid50-60,
+.raid-groups--raid10 {
+  grid-template-columns: repeat(var(--raid-columns), minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .raid-groups--raid50-60,
+  .raid-groups--raid10 {
+    grid-template-columns: repeat(var(--raid-columns-tablet), minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .raid-groups--raid50-60,
+  .raid-groups--raid10 {
+    grid-template-columns: repeat(var(--raid-columns-mobile), minmax(0, 1fr));
+  }
+}

@@ -1,5 +1,6 @@
 .tool-info {
   position: relative;
+  z-index: 1;
   display: inline-flex;
   margin-left: 8px;
   vertical-align: baseline;
@@ -33,15 +34,20 @@
 }
 
 .tool-info__popover {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 20;
   width: min(920px, calc(100vw - 40px));
   max-height: min(70vh, 680px);
-  margin-top: 12px;
+  margin: 0;
   padding: 18px 20px;
   overflow-y: auto;
   border: 1px solid #315375;
   border-radius: 15px;
-  background: #0b1728;
-  box-shadow: 0 18px 45px #0007;
+  background: #0b1728f5;
+  box-shadow: 0 18px 45px #0008;
+  backdrop-filter: blur(16px);
 }
 
 .tool-info__popover[hidden] {
@@ -96,7 +102,7 @@
 
 @media (max-width: 750px) {
   .tool-info__popover {
-    width: min(920px, calc(100vw - 24px));
+    width: min(920px, calc(100vw - 40px));
     padding: 16px;
   }
 

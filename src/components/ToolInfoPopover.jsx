@@ -7,17 +7,12 @@ export default function ToolInfoPopover({ name, sections }) {
   const popoverId = `tool-info-${useId()}`
   const titleId = `${popoverId}-title`
   const containerRef = useRef(null)
-  const [hovered, setHovered] = useState(false)
-  const [focused, setFocused] = useState(false)
-  const [pinned, setPinned] = useState(false)
-  const [dismissed, setDismissed] = useState(false)
-  const isVisible = (hovered || focused || pinned) && !dismissed
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     function dismissOutside(event) {
       if (!containerRef.current?.contains(event.target)) {
-        setPinned(false)
-        setDismissed(true)
+        setIsOpen(false)
       }
     }
 
@@ -26,49 +21,22 @@ export default function ToolInfoPopover({ name, sections }) {
   }, [])
 
   function dismissWithEscape(event) {
-    if (event.key === 'Escape' && isVisible) {
+    if (event.key === 'Escape' && isOpen) {
       event.preventDefault()
-      setPinned(false)
-      setDismissed(true)
-      setFocused(false)
-      event.currentTarget.blur()
+      setIsOpen(false)
     }
   }
 
   return (
-    <span
-      className="tool-info"
-      ref={containerRef}
-      onMouseEnter={() => {
-        setHovered(true)
-        setDismissed(false)
-      }}
-      onMouseLeave={() => {
-        setHovered(false)
-        setDismissed(false)
-      }}
-    >
+    <span className="tool-info" ref={containerRef}>
       <button
         type="button"
         className="tool-info__trigger"
         aria-label={t('Informations sur cet outil')}
-        aria-expanded={isVisible}
+        aria-expanded={isOpen}
         aria-controls={popoverId}
-        onFocus={() => {
-          setFocused(true)
-          setDismissed(false)
-        }}
-        onBlur={() => setFocused(false)}
         onKeyDown={dismissWithEscape}
-        onClick={() => {
-          if (pinned) {
-            setPinned(false)
-            setDismissed(true)
-          } else {
-            setPinned(true)
-            setDismissed(false)
-          }
-        }}
+        onClick={() => setIsOpen(open => !open)}
       >
         <span aria-hidden="true">?</span>
       </button>
@@ -76,7 +44,7 @@ export default function ToolInfoPopover({ name, sections }) {
         id={popoverId}
         className="tool-info__popover"
         aria-labelledby={titleId}
-        hidden={!isVisible}
+        hidden={!isOpen}
       >
         <span className="tool-info__eyebrow">{t(name)}</span>
         <h2 id={titleId}>{t('Infos sur l’outil')}</h2>

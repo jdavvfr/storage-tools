@@ -15,6 +15,21 @@ function Heading({ n, title, badge }) { return <div className="heading"><div><sp
 function Stars({ value }) { return <span className="stars">{[1,2,3,4,5].map(x => <i key={x} className={x <= value ? 'on' : ''} />)}</span> }
 function Metric({ label, value, detail, accent = '' }) { return <article className={`metric ${accent}`}><span>{label}</span><strong>{value}</strong><small>{detail}</small></article> }
 function RebuildCard({ title, value, detail, accent }) { return <article className={`rebuild-card ${accent}`}><span>{title}</span><strong>{value === null ? 'Non disponible' : duration(value)}</strong><small>{detail}</small><div className="rebuild-bar"><i style={{ width: `${value === null ? 0 : Math.min(100, value / 96 * 100)}%` }} /></div></article> }
+function ComparisonIndicator({ value, selectedValue, lowerIsBetter = false, metric }) {
+  if (!Number.isFinite(value) || !Number.isFinite(selectedValue) || value === selectedValue) return null
+
+  const isHigher = value > selectedValue
+  const isBetter = lowerIsBetter ? !isHigher : isHigher
+  const direction = isHigher ? '↑' : '↓'
+  const difference = isHigher ? 'supérieure' : 'inférieure'
+
+  return <span
+    className={`comparison-indicator ${isBetter ? 'better' : 'worse'}`}
+    role="img"
+    aria-label={`${metric} : valeur ${difference} à la ligne sélectionnée`}
+    title={`${metric} : valeur ${difference} à la ligne sélectionnée`}
+  >{direction}</span>
+}
 
 export default function RaidCalculator({ active = true, advanced = false }) {
   const [raid, setRaid] = useState('')
@@ -23,14 +38,15 @@ export default function RaidCalculator({ active = true, advanced = false }) {
   const [hotSpares, setHotSpares] = useState(0)
   const [diskSizeTB, setDiskSizeTB] = useState('')
   const [groupCount, setGroupCount] = useState(2)
-  const [rebuildLoad, setRebuildLoad] = useState(40)
-  const calculateIops = advanced
+  const [rebuildLoad, setRebuildLoad] = useState(0)
+  const calculateIops = true
   const calculateRebuild = advanced
   const [usePiB, setUsePiB] = useState(false)
-  const [ioProfile, setIoProfile] = useState('database')
-  const [readPercent, setReadPercent] = useState(ioProfiles.database.readPercent)
-  const [accessPattern, setAccessPattern] = useState(ioProfiles.database.accessPattern)
-  const [blockSizeKiB, setBlockSizeKiB] = useState(ioProfiles.database.blockSizeKiB)
+  const defaultProfile = advanced ? 'backup' : 'database'
+  const [ioProfile, setIoProfile] = useState(defaultProfile)
+  const [readPercent, setReadPercent] = useState(ioProfiles[defaultProfile].readPercent)
+  const [accessPattern, setAccessPattern] = useState(ioProfiles[defaultProfile].accessPattern)
+  const [blockSizeKiB, setBlockSizeKiB] = useState(ioProfiles[defaultProfile].blockSizeKiB)
   const [manualSelection, setManualSelection] = useState(null)
   const [parameterRevision, setParameterRevision] = useState(0)
 
@@ -39,7 +55,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
   const grouped = ['RAID50', 'RAID60'].includes(raid)
   const args = { raid, diskCount, hotSpares, diskSizeTB, groupCount, disk, rebuildLoad, readPercent, accessPattern, blockSizeKiB, calculateIops, calculateRebuild }
   const result = calculateRaid(args)
-  const comparison = calculateIops ? buildRaidComparison(args) : []
+  const comparison = advanced ? buildRaidComparison(args) : []
   const validComparison = comparison.filter(row => row.result.valid)
   const configuredComparison = validComparison.find(row => row.raid === raid)
   const selectedComparisonRaid = manualSelection?.parameterRevision === parameterRevision &&
@@ -83,7 +99,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
         </div>
         {definition && <div className="raid-info"><span>{definition.description}</span><strong>Coût d’écriture aléatoire ×{definition.writePenalty}</strong></div>}
         {!ready && <div className="invitation">Sélectionnez le disque, le RAID, le nombre et la capacité des disques</div>}{result.ready && !result.valid && <div className="error">{result.message}</div>}</article>
-        {calculateIops && <article className="panel io-profile">
+        {advanced && <article className="panel io-profile">
           <Heading n="02" title="Profil IO" badge="Charge applicative" />
           <div className="form-grid">
             <label className="wide"><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{Object.entries(ioProfiles).map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>
@@ -95,7 +111,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
           <p className="profile-recommendation"><strong>Recommandation — {selectedProfile.label} :</strong> {selectedProfile.recommendation}</p>
           <p className="profile-sum">Lecture + écriture : 100 % de la charge logique.</p>
         </article>}
-        {!calculateIops && <article className="panel"><Heading n="02" title="Disque sélectionné" badge={disk?.technology || 'En attente'} />{disk ? <>
+        {!advanced && <article className="panel"><Heading n="02" title="Disque sélectionné" badge={disk?.technology || 'En attente'} />{disk ? <>
           <div className="disk-title"><strong>{diskType}</strong><span>{disk.technology} · {disk.interface} · {disk.workload}</span></div>
           <div className="disk-grid">
             <div><span>IOPS lecture de référence</span><strong>{formatIops(disk.readIops)}</strong></div>
@@ -107,7 +123,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
           <p className="profile-sum">Valeurs indicatives du calculateur, non rattachées à une référence constructeur.</p>
           </> : <div className="empty">Les caractéristiques du disque apparaîtront ici</div>}</article>}
       </div>
-      {calculateIops && <article className="panel raid-disk-panel"><Heading n="03" title="Disque sélectionné" badge={disk?.technology || 'En attente'} />{disk ? <>
+      {advanced && <article className="panel raid-disk-panel"><Heading n="03" title="Disque sélectionné" badge={disk?.technology || 'En attente'} />{disk ? <>
         <div className="disk-title"><strong>{diskType}</strong><span>{disk.technology} · {disk.interface} · {disk.workload}</span></div>
         <div className="disk-grid">
           <div><span>IOPS lecture de référence</span><strong>{formatIops(disk.readIops)}</strong></div>
@@ -120,27 +136,79 @@ export default function RaidCalculator({ active = true, advanced = false }) {
         </> : <div className="empty">Les caractéristiques du disque apparaîtront ici</div>}</article>}
     </section>
 
-    {!calculateIops && result.valid && <>
-      <section className="panel"><Heading n="03" title="Capacité et performances" badge={definition.label} />
+    {!advanced && result.valid && <>
+      <section className="panel"><Heading n="03" title="Capacité et performance" badge={definition.label} />
         <div className="metrics">
           <Metric label="Capacité utile" value={capacity(result.usableTiB, usePiB)} detail={`${decimal(result.usableTB, usePiB)} sur ${number(result.usableDisks)} disques utiles`} accent="cyan" />
           <Metric label="Rendement installé" value={`${number(result.efficiencyInstalled, 1)} %`} detail={`${number(result.installedRawTB, 2)} TB installés, hot spares inclus`} accent="purple" />
           <Metric label="Débit lecture agrégé" value={bandwidth(result.readBandwidthMBps)} detail={`${number(result.active)} disques actifs`} accent="green" />
           <Metric label="Débit écriture agrégé" value={bandwidth(result.writeBandwidthMBps)} detail={`${number(result.usableDisks)} disques de données`} accent="cyan" />
+          <Metric label="Capacité brute" value={capacity(result.installedRawTiB, usePiB)} detail={`${decimal(result.installedRawTB, usePiB)} installés, hot spares inclus`} accent="purple" />
+          <Metric label="Résilience" value={`${number(result.resilience)} / 5`} detail={result.faultTolerance} accent="green" />
+          <Metric label="IOPS lecture agrégés" value={formatIops(result.readIops)} detail="Base de données · 70 % lecture · aléatoire · 8 KiB" accent="cyan" />
+          <Metric label="IOPS écriture agrégés" value={formatIops(result.writeIops)} detail="Base de données · 70 % lecture · aléatoire · 8 KiB" accent="purple" />
         </div>
       </section>
       <RaidDiagram raid={raid} diskCount={diskCount} hotSpares={hotSpares} groupCount={groupCount} sectionNumber="04" />
     </>}
 
-    {calculateIops && validComparison.length > 0 && selectedResult && <>
+    {advanced && validComparison.length > 0 && selectedResult && <>
       <section className="panel"><Heading n="04" title="Comparaison RAID" badge={`${readPercent} % lecture · ${100 - readPercent} % écriture`} />
         <p className="profile-sum">Sélectionnez une ligne (Entrée ou Espace au clavier) pour afficher ce niveau RAID dans l’organisation et l’analyse de reconstruction.</p>
-        <div className="table-wrap"><table aria-label="Comparaison RAID"><thead><tr><th>RAID</th><th>Capacité utile</th><th>Rendement installé</th><th>Débit lecture</th><th>IOPS lecture</th><th>Débit écriture</th><th>IOPS écriture</th><th>Rebuild réaliste</th><th>Résilience</th></tr></thead><tbody>{validComparison.map(x => <tr key={x.raid} className={`raid-comparison__row${x.raid === selectedComparisonRaid ? ' selected' : ''}`} tabIndex={0} aria-selected={x.raid === selectedComparisonRaid} onClick={() => setManualSelection({ parameterRevision, raid: x.raid })} onKeyDown={event => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            setManualSelection({ parameterRevision, raid: x.raid })
-          }
-        }}><td><b>{x.definition.label}</b></td><td>{capacity(x.result.usableTiB, usePiB)}<small>({decimal(x.result.usableTB, usePiB)})</small></td><td>{number(x.result.efficiencyInstalled, 1)} %</td><td>{bandwidth(x.result.readBandwidthMBps)}</td><td>{formatIops(x.result.readIops)}</td><td>{bandwidth(x.result.writeBandwidthMBps)}</td><td>{formatIops(x.result.writeIops)}</td><td>{x.result.rebuild.realistic === null ? 'Non disponible' : duration(x.result.rebuild.realistic)}</td><td><Stars value={x.result.resilience} /></td></tr>)}</tbody></table></div>
+        <div className="table-wrap">
+          <table aria-label="Comparaison RAID">
+            <thead><tr><th>RAID</th><th>Capacité utile</th><th>Rendement installé</th><th>Débit lecture</th><th>IOPS lecture</th><th>Débit écriture</th><th>IOPS écriture</th><th>Rebuild réaliste</th><th>Résilience</th></tr></thead>
+            <tbody>{validComparison.map(x => {
+              const isSelected = x.raid === selectedComparisonRaid
+              const selectRow = () => setManualSelection({ parameterRevision, raid: x.raid })
+
+              return <tr
+                key={x.raid}
+                className={`raid-comparison__row${isSelected ? ' selected' : ''}`}
+                tabIndex={0}
+                aria-selected={isSelected}
+                onClick={selectRow}
+                onKeyDown={event => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    selectRow()
+                  }
+                }}
+              >
+                <td><b>{x.definition.label}</b></td>
+                <td>
+                  {capacity(x.result.usableTiB, usePiB)}
+                  {!isSelected && <ComparisonIndicator value={x.result.usableTB} selectedValue={selectedResult.usableTB} metric="Capacité utile" />}
+                  <small>({decimal(x.result.usableTB, usePiB)})</small>
+                </td>
+                <td>{number(x.result.efficiencyInstalled, 1)} %</td>
+                <td>
+                  {bandwidth(x.result.readBandwidthMBps)}
+                  {!isSelected && <ComparisonIndicator value={x.result.readBandwidthMBps} selectedValue={selectedResult.readBandwidthMBps} metric="Débit lecture" />}
+                </td>
+                <td>
+                  {formatIops(x.result.readIops)}
+                  {!isSelected && <ComparisonIndicator value={x.result.readIops} selectedValue={selectedResult.readIops} metric="IOPS lecture" />}
+                </td>
+                <td>
+                  {bandwidth(x.result.writeBandwidthMBps)}
+                  {!isSelected && <ComparisonIndicator value={x.result.writeBandwidthMBps} selectedValue={selectedResult.writeBandwidthMBps} metric="Débit écriture" />}
+                </td>
+                <td>
+                  {formatIops(x.result.writeIops)}
+                  {!isSelected && <ComparisonIndicator value={x.result.writeIops} selectedValue={selectedResult.writeIops} metric="IOPS écriture" />}
+                </td>
+                <td>
+                  {x.result.rebuild.realistic === null ? 'Non disponible' : <>
+                    {duration(x.result.rebuild.realistic)}
+                    {!isSelected && <ComparisonIndicator value={x.result.rebuild.realistic} selectedValue={selectedResult.rebuild.realistic} lowerIsBetter metric="Durée de rebuild" />}
+                  </>}
+                </td>
+                <td><Stars value={x.result.resilience} /></td>
+              </tr>
+            })}</tbody>
+          </table>
+        </div>
         <p className="profile-sum">Les IOPS de chaque ligne utilisent le profil sélectionné, le bloc de {blockSizeKiB} KiB et les coûts physiques propres à chaque niveau RAID.</p>
       </section>
 

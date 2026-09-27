@@ -88,7 +88,7 @@ body {
 .raid-layout {
   display: grid;
   gap: 22px;
-  margin-bottom: 34px;
+  margin-bottom: 22px;
 }
 
 .raid-parameter-grid {
@@ -806,6 +806,24 @@ td small {
 .selected {
   background: #14577347;
   box-shadow: inset 3px 0 #2dd4bf;
+}
+
+.comparison-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1;
+  vertical-align: -1px;
+}
+
+.comparison-indicator.better {
+  color: #4ade80;
+}
+
+.comparison-indicator.worse {
+  color: #fb7185;
 }
 
 footer {

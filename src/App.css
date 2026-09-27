@@ -91,6 +91,16 @@ body {
   gap: 22px;
 }
 
+.raid-controls {
+  display: grid;
+  align-content: start;
+  gap: 22px;
+}
+
+.raid-controls > .panel {
+  margin-bottom: 0;
+}
+
 .panel {
   margin-bottom: 22px;
   padding: 26px;
@@ -260,7 +270,7 @@ input[aria-invalid="true"] {
 .advanced-options {
   display: grid;
   gap: 13px;
-  margin-top: 20px;
+  margin-top: 0;
   padding: 16px;
   border: 1px solid #263c5c;
   border-radius: 12px;
@@ -290,9 +300,7 @@ input[aria-invalid="true"] {
 }
 
 .io-profile {
-  margin-top: 24px;
-  padding-top: 22px;
-  border-top: 1px solid #263c5c;
+  margin-top: 0;
 }
 
 .io-profile .heading {

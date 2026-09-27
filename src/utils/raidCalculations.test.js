@@ -110,6 +110,11 @@ test('sequential parity writes use full-stripe costs and larger blocks hit bandw
 })
 
 test('usage profiles provide valid ratios, access patterns, and block recommendations', () => {
+  assert.deepEqual(
+    Object.values(ioProfiles).map(profile => profile.label),
+    ['Sauvegarde', 'Virtualisation', 'Fichier', 'Base de données', 'Personnalisé']
+  )
+
   for (const profile of Object.values(ioProfiles)) {
     assert.ok(profile.readPercent >= 0 && profile.readPercent <= 100)
     assert.ok(['random', 'sequential'].includes(profile.accessPattern))

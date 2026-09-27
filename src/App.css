@@ -267,38 +267,6 @@ input[aria-invalid="true"] {
   color: #5eead4;
 }
 
-.advanced-options {
-  display: grid;
-  gap: 13px;
-  margin-top: 0;
-  padding: 16px;
-  border: 1px solid #263c5c;
-  border-radius: 12px;
-  background: #0b1829;
-}
-
-.advanced-options > strong {
-  color: #b6d7ee;
-  font-size: 0.86rem;
-}
-
-.advanced-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #9cabbd;
-  font-size: 0.84rem;
-  cursor: pointer;
-}
-
-.advanced-option input {
-  flex: 0 0 auto;
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: #2dd4bf;
-}
-
 .io-profile {
   margin-top: 0;
 }

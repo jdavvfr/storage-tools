@@ -19,7 +19,7 @@ body {
 .shell {
   width: min(1500px, calc(100% - 40px));
   margin: auto;
-  padding: 46px 0;
+  padding: 46px 0 0;
 }
 
 .language-bar {
@@ -967,6 +967,19 @@ footer strong {
   color: #fbbf24;
 }
 
+footer.site-footer {
+  justify-content: space-between;
+  width: min(1500px, calc(100% - 40px));
+  padding: 18px 20px;
+  margin: 22px auto 32px;
+  border: 1px solid #203252;
+  border-left: 3px solid #5eead4;
+  border-radius: 12px;
+  color: #899bb0;
+  background: #0b1728cc;
+  font-size: 0.8rem;
+}
+
 footer.raid-assumptions {
   display: block;
 }
@@ -1015,7 +1028,11 @@ footer.raid-assumptions {
 @media (max-width: 750px) {
   .shell {
     width: calc(100% - 24px);
-    padding: 26px 0;
+    padding: 26px 0 0;
+  }
+
+  footer.site-footer {
+    width: calc(100% - 24px);
   }
 
   .form-grid,

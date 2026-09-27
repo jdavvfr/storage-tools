@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { useLanguage } from '../LanguageContext'
 import './AboutSection.css'
 
 const ICONS = {
@@ -46,6 +47,7 @@ export default function AboutSection({
   className = ''
 }) {
   const headingId = `about-${useId()}`
+  const { t } = useLanguage()
 
   return (
     <section className={`panel about-section ${className}`} aria-labelledby={headingId}>
@@ -62,6 +64,10 @@ export default function AboutSection({
           {highlights.map(highlight => <span key={highlight}>{highlight}</span>)}
         </div>
       )}
+      <section className="about-section__site-info" aria-labelledby={`${headingId}-site-info`}>
+        <h3 id={`${headingId}-site-info`}>{t('À PROPOS DE STORAGE TOOLS')}</h3>
+        <p>{t('Réunir ces outils au même endroit simplifie les tâches quotidiennes de stockage et permet d’obtenir rapidement des estimations cohérentes.')}</p>
+      </section>
     </section>
   )
 }

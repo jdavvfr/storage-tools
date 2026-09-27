@@ -12,6 +12,13 @@ export const ioProfiles = {
     blockSizeKiB: 8,
     recommendation: 'Point de départ transactionnel : E/S aléatoires, blocs de 8 KiB et majorité de lectures. Ajustez selon les métriques réelles de la base.'
   },
+  virtualization: {
+    label: 'Virtualisation',
+    readPercent: 70,
+    accessPattern: 'random',
+    blockSizeKiB: 8,
+    recommendation: 'Point de départ pour un datastore de machines virtuelles : charge aléatoire mixte, blocs de 8 KiB et majorité de lectures. Les profils des VM et du datastore peuvent varier ; ajustez avec des mesures réelles.'
+  },
   files: {
     label: 'Fichiers',
     readPercent: 70,
@@ -63,7 +70,9 @@ export function calculateRaid({
   rebuildLoad = 40,
   readPercent = 70,
   accessPattern = 'random',
-  blockSizeKiB = 4
+  blockSizeKiB = 4,
+  calculateIops = true,
+  calculateRebuild = true
 }) {
   const definition = raidDefinitions[raid]
   const active = Number(diskCount)
@@ -74,7 +83,7 @@ export function calculateRaid({
   const writeRatio = 1 - readRatio
   const blockSize = Number(blockSizeKiB)
   if (!definition || !disk || !active || !sizeTB) return { ready: false, valid: false, message: '' }
-  const message = validate(raid, active, spares, sizeTB, groups, readRatio, accessPattern, blockSize)
+  const message = validate(raid, active, spares, sizeTB, groups, readRatio, accessPattern, blockSize, calculateIops)
   if (message) return { ready: true, valid: false, message }
 
   const installed = active + spares
@@ -82,22 +91,27 @@ export function calculateRaid({
   const activeRawTB = active * sizeTB
   const installedRawTB = installed * sizeTB
   const usableTB = usableDisks * sizeTB
-  const baseHours = sizeTB * 1_000_000 / disk.rebuildMBps / 3600
   const affectedGroupSize = ['RAID50', 'RAID60'].includes(raid) ? active / groups : ['RAID1', 'RAID10'].includes(raid) ? 2 : active
-  const groupWorkloadFactor = 1 + Math.max(0, affectedGroupSize - 2) * definition.rebuildContentionPerAdditionalDisk
-  const realisticHours = baseHours / Math.max(0.15, 1 - Number(rebuildLoad) / 100) * groupWorkloadFactor
-  const degradedHours = realisticHours / 0.65
-  const ioCosts = getIoCosts(raid, active, groups, accessPattern)
-  const diskReadIops = Math.min(disk.readIops, disk.readBandwidthMBps * 1_000_000 / (blockSize * 1024))
-  const diskWriteIops = Math.min(disk.writeIops, disk.writeBandwidthMBps * 1_000_000 / (blockSize * 1024))
-  const readIopsBudget = active * diskReadIops
-  const writeIopsBudget = active * diskWriteIops
-  const readDemandPerOperation = readRatio * ioCosts.readReads + writeRatio * ioCosts.writeReads
-  const writeDemandPerOperation = writeRatio * ioCosts.writeWrites
-  const logicalIops = Math.min(
-    readDemandPerOperation ? readIopsBudget / readDemandPerOperation : Infinity,
-    writeDemandPerOperation ? writeIopsBudget / writeDemandPerOperation : Infinity
-  )
+  let rebuild = { optimistic: null, realistic: null, degraded: null, groupWorkloadFactor: null }
+  if (calculateRebuild && definition.rebuildSupported) {
+    const baseHours = sizeTB * 1_000_000 / disk.rebuildMBps / 3600
+    const groupWorkloadFactor = 1 + Math.max(0, affectedGroupSize - 2) * definition.rebuildContentionPerAdditionalDisk
+    const realisticHours = baseHours / Math.max(0.15, 1 - Number(rebuildLoad) / 100) * groupWorkloadFactor
+    rebuild = { optimistic: baseHours, realistic: realisticHours, degraded: realisticHours / 0.65, groupWorkloadFactor }
+  }
+  const ioCosts = calculateIops ? getIoCosts(raid, active, groups, accessPattern) : null
+  const diskReadIops = calculateIops ? Math.min(disk.readIops, disk.readBandwidthMBps * 1_000_000 / (blockSize * 1024)) : null
+  const diskWriteIops = calculateIops ? Math.min(disk.writeIops, disk.writeBandwidthMBps * 1_000_000 / (blockSize * 1024)) : null
+  const readIopsBudget = calculateIops ? active * diskReadIops : null
+  const writeIopsBudget = calculateIops ? active * diskWriteIops : null
+  const readDemandPerOperation = calculateIops ? readRatio * ioCosts.readReads + writeRatio * ioCosts.writeReads : null
+  const writeDemandPerOperation = calculateIops ? writeRatio * ioCosts.writeWrites : null
+  const logicalIops = calculateIops
+    ? Math.min(
+        readDemandPerOperation ? readIopsBudget / readDemandPerOperation : Infinity,
+        writeDemandPerOperation ? writeIopsBudget / writeDemandPerOperation : Infinity
+      )
+    : null
 
   return {
     ready: true, valid: true, active, spares, installed, usableDisks,
@@ -106,8 +120,8 @@ export function calculateRaid({
     usableTB, usableTiB: tbToTiB(usableTB),
     efficiencyActive: usableDisks / active * 100,
     efficiencyInstalled: usableDisks / installed * 100,
-    readIops: logicalIops * readRatio,
-    writeIops: logicalIops * writeRatio,
+    readIops: calculateIops ? logicalIops * readRatio : null,
+    writeIops: calculateIops ? logicalIops * writeRatio : null,
     totalIops: logicalIops,
     ioCosts,
     readPercent: readRatio * 100,
@@ -124,9 +138,7 @@ export function calculateRaid({
     rebuildSupported: definition.rebuildSupported,
     groupCount: ['RAID50', 'RAID60'].includes(raid) ? groups : 1,
     affectedGroupSize,
-    rebuild: definition.rebuildSupported
-      ? { optimistic: baseHours, realistic: realisticHours, degraded: degradedHours, groupWorkloadFactor }
-      : { optimistic: null, realistic: null, degraded: null, groupWorkloadFactor: null },
+    rebuild,
     hotSpareStatus: spares > 0 ? `${spares} hot spare${spares > 1 ? 's' : ''} disponible${spares > 1 ? 's' : ''}` : 'Aucun hot spare',
   }
 }
@@ -151,14 +163,16 @@ function getIoCosts(raid, active, groups, accessPattern) {
   return { readReads: 1, writeReads, writeWrites }
 }
 
-function validate(raid, active, spares, sizeTB, groups, readRatio, accessPattern, blockSize) {
+function validate(raid, active, spares, sizeTB, groups, readRatio, accessPattern, blockSize, calculateIops) {
   const definition = raidDefinitions[raid]
   if (!Number.isInteger(active) || active < definition.minimumDisks) return `${definition.label} nécessite au minimum ${definition.minimumDisks} disques actifs`
   if (!Number.isInteger(spares) || spares < 0) return 'Le nombre de hot spares doit être un entier positif ou nul'
   if (sizeTB <= 0) return 'La capacité doit être supérieure à 0 TB'
-  if (!Number.isFinite(readRatio) || readRatio < 0 || readRatio > 1) return 'Le taux de lecture doit être compris entre 0 et 100 %'
-  if (!['random', 'sequential'].includes(accessPattern)) return 'Le type d’accès doit être aléatoire ou séquentiel'
-  if (!Number.isFinite(blockSize) || blockSize <= 0) return 'La taille de bloc doit être supérieure à 0 KiB'
+  if (calculateIops) {
+    if (!Number.isFinite(readRatio) || readRatio < 0 || readRatio > 1) return 'Le taux de lecture doit être compris entre 0 et 100 %'
+    if (!['random', 'sequential'].includes(accessPattern)) return 'Le type d’accès doit être aléatoire ou séquentiel'
+    if (!Number.isFinite(blockSize) || blockSize <= 0) return 'La taille de bloc doit être supérieure à 0 KiB'
+  }
   if (['RAID1', 'RAID10'].includes(raid) && active % 2) return `${definition.label} nécessite un nombre pair de disques actifs`
   if (['RAID50', 'RAID60'].includes(raid)) {
     const min = raid === 'RAID50' ? 3 : 4

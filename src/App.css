@@ -585,6 +585,10 @@ input[aria-invalid="true"] {
   gap: 8px;
 }
 
+.growth-calculator-input:not(.growth-calculator-input--single) {
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.65fr);
+}
+
 .copy-estimator-input select,
 .growth-calculator-input select {
   padding: 0 10px;

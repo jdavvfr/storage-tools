@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { parseCapacityInput, tbToTiB, tiBToTB } from '../utils/raidCalculations'
 import { useLanguage } from '../LanguageContext'
-import AboutSection from './AboutSection'
 
 export default function CapacityConverter() {
   const { language, t } = useLanguage()
@@ -100,39 +99,6 @@ export default function CapacityConverter() {
           {t('La conversion distingue les unités décimales (To) des unités binaires (TiB), comme dans le calculateur RAID. La virgule et le point sont acceptés comme séparateurs décimaux.')}
         </p>
       </section>
-      <AboutSection
-        className="about-section--centered"
-        eyebrow={t('À PROPOS DE LA CONVERSION')}
-        title={t('Comparez To et TiB sans ambiguïté')}
-        description={t('Convertissez les unités décimales et binaires dans les deux sens, avec un résultat recalculé à chaque saisie.')}
-        items={[
-          {
-            icon: 'capacity',
-            label: t('Unités décimales'),
-            value: t('To'),
-            description: t('Base 10 : 1 To représente 1 000 000 000 000 octets.')
-          },
-          {
-            icon: 'performance',
-            label: t('Unités binaires'),
-            value: 'TiB',
-            description: t('Base 2 : 1 TiB représente 1 099 511 627 776 octets.')
-          },
-          {
-            icon: 'resilience',
-            label: t('Précision'),
-            value: t('12 décimales'),
-            description: t('La conversion conserve une précision élevée sur le résultat affiché.')
-          },
-          {
-            icon: 'rebuild',
-            label: t('Conversion'),
-            value: t('Instantanée'),
-            description: t('Modifiez l’une des valeurs pour calculer immédiatement l’autre.')
-          }
-        ]}
-        highlights={['Virgule ou point décimal', 'Conversion dans les deux sens', 'Aucune donnée envoyée'].map(text => t(text))}
-      />
     </>
   )
 }

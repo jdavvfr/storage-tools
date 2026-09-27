@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { parseCapacityInput } from '../utils/raidCalculations'
 import { calculateCopyDurationSeconds, formatCopyDuration } from '../utils/copyDuration'
 import { useLanguage } from '../LanguageContext'
-import AboutSection from './AboutSection'
 
 const volumeUnits = [
   ['Go', 'Go'],
@@ -123,39 +122,6 @@ export default function CopyDurationEstimator() {
           {t('Cette estimation suppose un débit constant et ne tient pas compte des ralentissements, du protocole, des temps d’accès ni des autres activités du système.')}
         </p>
       </section>
-      <AboutSection
-        className="about-section--centered"
-        eyebrow={t('À PROPOS DE L’ESTIMATION')}
-        title={t('Estimez une durée de transfert théorique')}
-        description={t('Associez un volume de données à un débit pour obtenir une estimation immédiate, que les unités soient décimales, binaires ou exprimées en bits.')}
-        items={[
-          {
-            icon: 'capacity',
-            label: t('Volume'),
-            value: t('4 unités'),
-            description: t('Saisissez des octets Mo, Go, MiB ou GiB.')
-          },
-          {
-            icon: 'performance',
-            label: t('Débit'),
-            value: t('4 unités'),
-            description: t('Choisissez un débit en octets par seconde ou en bits par seconde.')
-          },
-          {
-            icon: 'resilience',
-            label: t('Calcul'),
-            value: t('Instantané'),
-            description: t('La durée est recalculée à chaque modification du volume ou du débit.')
-          },
-          {
-            icon: 'rebuild',
-            label: t('Hypothèse'),
-            value: t('Débit constant'),
-            description: t('L’estimation ne modélise ni les ralentissements ni les temps d’accès.')
-          }
-        ]}
-        highlights={['Unités décimales et binaires', 'Conversion des bits en octets', 'Aucune donnée envoyée'].map(t)}
-      />
     </>
   )
 }

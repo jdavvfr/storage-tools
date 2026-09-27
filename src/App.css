@@ -22,6 +22,10 @@ body {
   padding: 46px 0 0;
 }
 
+.shell.shell--footer {
+  padding: 0 0 32px;
+}
+
 .language-bar {
   display: flex;
   align-items: center;

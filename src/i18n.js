@@ -9,6 +9,7 @@ export const translations = {
     'Croissance volumétrique': 'Volume Growth',
     'Tape LTO': 'LTO Tape',
     'RAID Calculator': 'RAID Calculator',
+    'Informations sur cet outil': 'Information about this tool',
     'À PROPOS DE STORAGE TOOLS': 'ABOUT STORAGE TOOLS',
     'Storage Tools propose des calculateurs et outils de dimensionnement pour le stockage, la protection des données et les infrastructures de datacenter.': 'Storage Tools offers calculators and sizing tools for storage, data protection, and datacenter infrastructure.',
     'Les résultats fournis sont des estimations destinées à faciliter les études et avant-ventes. Ils doivent être validés au regard des recommandations constructeurs et des exigences du projet.': 'The results provided are estimates intended to support studies and presales. They should be validated against vendor recommendations and project requirements.',

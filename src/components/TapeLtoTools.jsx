@@ -9,7 +9,6 @@ import {
   LTO_COMPRESSION_RATIO,
   ltoGenerations,
 } from '../utils/tapeLto'
-import AboutSection from './AboutSection'
 
 const volumeUnits = [
   ['To', 'To'],
@@ -235,19 +234,6 @@ export default function TapeLtoTools() {
           {' '}{t('La capacité et les cartouches restent calculées sur le volume total, sans multiplication par le nombre de lecteurs. L’hypothèse de compression ne modifie que le calcul de capacité. L’estimation suppose un débit constant et exclut les temps de montage, les changements de cartouche, les ralentissements, le protocole et les autres activités du système.')}
         </p>
       </section>
-      <AboutSection
-        className="about-section--centered"
-        eyebrow={t('À PROPOS DES OUTILS TAPE LTO')}
-        title={t('Dimensionnez et estimez vos écritures sur bande')}
-        description={t('Un calculateur réunit capacité, durée d’écriture et nombre de jeux/cycles identiques à conserver.')}
-        items={[
-          { icon: 'capacity', label: t('Générations'), value: language === 'en' ? 'LTO-7 to LTO-9' : 'LTO-7 à LTO-9', description: t('Capacités natives de 6, 12 et 18 To par cartouche.') },
-          { icon: 'performance', label: t('Débits natifs'), value: `300–400 ${t('Mo/s')}`, description: t('Références par lecteur ; VM : accélération idéale linéaire, NAS : un lecteur.') },
-          { icon: 'resilience', label: t('Compression'), value: `${LTO_COMPRESSION_RATIO}:1 ${t('estimé')}`, description: t('Hypothèse théorique non garantie, dépendante du contenu des données.') },
-          { icon: 'rebuild', label: t('Rotation'), value: t('Jeux/cycles identiques'), description: t('Le total est le nombre de cartouches par sauvegarde multiplié par le nombre de jeux à conserver ; aucun schéma GFS n’est supposé.') },
-        ]}
-        highlights={['Arrondi au nombre de cartouches supérieur', 'Parallélisation VM, NAS monolecteur', 'Aucune donnée envoyée'].map(text => t(text))}
-      />
     </>
   )
 }

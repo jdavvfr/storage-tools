@@ -257,6 +257,32 @@ input[aria-invalid="true"] {
   color: #5eead4;
 }
 
+.io-profile {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid #263c5c;
+}
+
+.io-profile .heading {
+  margin-bottom: 16px;
+}
+
+.profile-recommendation,
+.profile-sum {
+  margin: 14px 0 0;
+  color: #8296ad;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.profile-recommendation strong {
+  color: #b6d7ee;
+}
+
+.profile-sum {
+  color: #6e849e;
+}
+
 .error {
   margin-top: 16px;
   padding: 13px;
@@ -811,6 +837,10 @@ footer strong {
 
   .form-grid .wide {
     grid-column: auto;
+  }
+
+  .io-profile .form-grid .wide {
+    grid-column: 1 / -1;
   }
 
   .raid-info,

@@ -66,7 +66,9 @@ export default function AboutSection({
       )}
       <section className="about-section__site-info" aria-labelledby={`${headingId}-site-info`}>
         <h3 id={`${headingId}-site-info`}>{t('À PROPOS DE STORAGE TOOLS')}</h3>
-        <p>{t('Réunir ces outils au même endroit simplifie les tâches quotidiennes de stockage et permet d’obtenir rapidement des estimations cohérentes.')}</p>
+        <p>{t('Storage Tools propose des calculateurs et outils de dimensionnement pour le stockage, la protection des données et les infrastructures de datacenter.')}</p>
+        <p>{t('Les résultats fournis sont des estimations destinées à faciliter les études et avant-ventes. Ils doivent être validés au regard des recommandations constructeurs et des exigences du projet.')}</p>
+        <p className="site-info__copyright">Storage Tools © 2026 Jeremie D&apos;Agostino<br />Released under the MIT License</p>
       </section>
     </section>
   )

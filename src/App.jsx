@@ -59,10 +59,6 @@ function App() {
       <RaidCalculator active={activeTool === 'raid'} />
       <RaidCalculator active={activeTool === 'raid-advanced'} advanced />
     </main>
-    <footer className="site-footer">
-      <span>Storage Tools © 2026 Jeremie D&apos;Agostino</span>
-      <span>Released under the MIT License</span>
-    </footer>
   </>
 }
 

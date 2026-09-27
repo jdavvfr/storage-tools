@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { parseCapacityInput } from '../utils/raidCalculations'
 import { calculateVolumeGrowth } from '../utils/volumeGrowth'
 import { useLanguage } from '../LanguageContext'
-import AboutSection from './AboutSection'
 
 const volumeUnits = [
   ['Go', 'Go'],
@@ -148,39 +147,6 @@ export default function VolumeGrowthCalculator() {
           {t('Formule : volume source × (1 + taux annuel / 100)^nombre d’années. Le calcul suppose un taux annuel constant.')}
         </p>
       </section>
-      <AboutSection
-        className="about-section--centered"
-        eyebrow={t('À PROPOS DE LA PROJECTION')}
-        title={t('Anticipez l’évolution de votre stockage')}
-        description={t('Estimez la volumétrie à prévoir avec un taux de croissance annuel composé, sans conversion de l’unité choisie.')}
-        items={[
-          {
-            icon: 'capacity',
-            label: t('Volume'),
-            value: t('6 unités'),
-            description: t('Saisissez un volume en Go, To, Po, GiB, TiB ou PiB.')
-          },
-          {
-            icon: 'performance',
-            label: t('Croissance'),
-            value: t('Composée'),
-            description: t('Le taux annuel est appliqué au volume obtenu l’année précédente.')
-          },
-          {
-            icon: 'resilience',
-            label: t('Projection'),
-            value: t('Multi-annuelle'),
-            description: t('Indiquez un nombre entier d’années pour calculer la volumétrie cible.')
-          },
-          {
-            icon: 'rebuild',
-            label: t('Résultat'),
-            value: t('Même unité'),
-            description: t('La cible est affichée dans l’unité du volume source.')
-          }
-        ]}
-        highlights={['Taux composé annuel', 'Virgule ou point décimal', 'Aucune donnée envoyée'].map(t)}
-      />
     </>
   )
 }

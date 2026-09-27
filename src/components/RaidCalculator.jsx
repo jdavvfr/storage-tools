@@ -4,7 +4,6 @@ import { diskTypes } from '../data/disks'
 import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, DEFAULT_IO_PROFILE, ioProfiles, raidDefinitions, sortedIoProfiles, tbToPB, tiBToPiB } from '../utils/raidCalculations'
 import { sortRaidComparison } from '../utils/raidComparison'
 import { formatIops } from '../utils/formatIops'
-import AboutSection from './AboutSection'
 import { RaidDiagram, RaidGroupCountControl } from './RaidEnhancements'
 
 const number = (v, d = 0, language = 'fr') => new Intl.NumberFormat(language === 'en' ? 'en-GB' : 'fr-FR', { maximumFractionDigits: d }).format(v || 0)
@@ -352,42 +351,5 @@ export default function RaidCalculator({ active = true, advanced = false }) {
 
     </>}
 
-    <AboutSection
-      className={!advanced ? 'about-section--wide-heading' : ''}
-      eyebrow={t('À PROPOS DU CALCULATEUR')}
-      title={t(advanced ? 'Évaluer les performances d’un groupe RAID' : 'Dimensionner un groupe RAID en quelques secondes')}
-      description={t(advanced
-        ? 'Comparez capacité, performances, IOPS estimées et reconstruction avec un profil IO ajustable.'
-        : 'Une lecture synthétique de la capacité, des performances et de la résilience.')}
-      items={[
-        {
-          icon: 'capacity',
-          label: t('Niveaux RAID'),
-          value: Object.keys(raidDefinitions).length,
-          description: t('RAID 0, 1, 5, 6, 10, 50 et 60')
-        },
-        {
-          icon: 'performance',
-          label: t('Technologies disque'),
-          value: Object.keys(diskTypes).length,
-          description: t('HDD SATA/SAS, SSD et NVMe')
-        },
-        {
-          icon: advanced ? 'performance' : 'resilience',
-          label: t(advanced ? 'Estimation' : 'Analyse'),
-          value: advanced ? 'IOPS' : '3 axes',
-          description: t(advanced ? 'IOPS lecture et écriture selon le profil IO' : 'Capacité, débit et tolérance aux pannes')
-        },
-        ...(advanced ? [{
-          icon: 'rebuild',
-          label: t('Reconstruction'),
-          value: '3 scénarios',
-          description: t('Optimiste, réaliste et dégradé')
-        }] : [])
-      ]}
-      highlights={advanced
-        ? ['Calcul en TiB et PiB', 'Disques de secours', 'Comparaison RAID', '100 % navigateur'].map(text => t(text))
-        : ['Calcul en TiB et PiB', 'Disques de secours', 'Capacité et performances', 'Organisation RAID'].map(text => t(text))}
-    />
   </div>
 }

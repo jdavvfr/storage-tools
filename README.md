@@ -21,4 +21,12 @@ Tape LTO capacity estimates use native capacities of 6 To (LTO-7), 12 To (LTO-8)
 
 Rebuild durations are per-disk estimates. The optimistic duration is disk capacity divided by the selected disk's nominal rebuild throughput. The realistic duration applies the configured workload percentage, then a domain-contention factor: 0% per member beyond two for RAID 1/10, 8% for each additional member in a RAID 5/50 recovery domain, and 12% for each additional member in RAID 6/60. For RAID 50/60, the recovery domain is one RAID group. The degraded estimate adds 35% to the realistic duration. These are explicit scenario assumptions, not hardware guarantees; controller behavior, rebuild priorities, workload, and read errors can substantially change actual times. RAID 0 has no redundancy, so a failed disk cannot be rebuilt.
 
+## RAID IOPS estimate assumptions
+
+The RAID calculator offers database, file-server, backup, and custom IO profiles. Profiles set an initial read/write ratio, access pattern, and block size; the read and write percentages always total 100% and can be adjusted. Recommendations are generic starting points, not workload measurements.
+
+Logical IOPS are estimated from the active disks' combined physical read and write budgets. Each logical read costs one physical read. For random writes, the assumed physical cost is one write for RAID 0, two writes for RAID 1/10, two reads plus two writes for RAID 5/50, and three reads plus three writes for RAID 6/60. Sequential RAID 5/6/50/60 writes optimistically assume the controller can coalesce and align them into full stripes, with no preread and a physical write cost equal to group members divided by data members. Reads from mirrors are assumed to balance across members. The result is the workload mix's maximum logical IOPS under those budgets, split according to the configured ratio.
+
+Per-disk IOPS references are capped by the listed nominal transfer bandwidth divided by the selected block size. This simplified theoretical model does not represent manufacturer guarantees or benchmark results and excludes cache, controller, queueing, bus limits, and application-specific behavior. Use measured workload traces for sizing production systems.
+
 Online tool : https://jdavvfr.github.io/storage-tools/

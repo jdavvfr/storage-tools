@@ -5,12 +5,12 @@ export const tiBToPiB = value => value / 1024
 export const tbToPB = value => value / 1000
 
 export const ioProfiles = {
-  database: {
-    label: 'Base de données',
-    readPercent: 70,
-    accessPattern: 'random',
-    blockSizeKiB: 8,
-    recommendation: 'Point de départ transactionnel : E/S aléatoires, blocs de 8 KiB et majorité de lectures. Ajustez selon les métriques réelles de la base.'
+  backup: {
+    label: 'Sauvegarde',
+    readPercent: 0,
+    accessPattern: 'sequential',
+    blockSizeKiB: 256,
+    recommendation: 'Point de départ pour une cible de sauvegarde : écritures séquentielles en gros blocs. Le profil d’une source lue pendant la sauvegarde sera différent.'
   },
   virtualization: {
     label: 'Virtualisation',
@@ -20,18 +20,18 @@ export const ioProfiles = {
     recommendation: 'Point de départ pour un datastore de machines virtuelles : charge aléatoire mixte, blocs de 8 KiB et majorité de lectures. Les profils des VM et du datastore peuvent varier ; ajustez avec des mesures réelles.'
   },
   files: {
-    label: 'Fichiers',
+    label: 'Fichier',
     readPercent: 70,
     accessPattern: 'random',
     blockSizeKiB: 64,
     recommendation: 'Point de départ pour un serveur de fichiers : charge mixte et blocs de 64 KiB. Les petits fichiers et les accès séquentiels peuvent changer fortement ce profil.'
   },
-  backup: {
-    label: 'Sauvegarde',
-    readPercent: 0,
-    accessPattern: 'sequential',
-    blockSizeKiB: 256,
-    recommendation: 'Point de départ pour une cible de sauvegarde : écritures séquentielles en gros blocs. Le profil d’une source lue pendant la sauvegarde sera différent.'
+  database: {
+    label: 'Base de données',
+    readPercent: 70,
+    accessPattern: 'random',
+    blockSizeKiB: 8,
+    recommendation: 'Point de départ transactionnel : E/S aléatoires, blocs de 8 KiB et majorité de lectures. Ajustez selon les métriques réelles de la base.'
   },
   custom: {
     label: 'Personnalisé',

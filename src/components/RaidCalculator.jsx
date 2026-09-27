@@ -57,33 +57,35 @@ export default function RaidCalculator({ active = true }) {
 
   return <div hidden={!active}>
     <section className="workspace">
-      <article className="panel"><Heading n="01" title="Configuration RAID" badge={definition?.label || 'À configurer'} /><div className="form-grid">
-        <label><span>Type de disque</span><select value={diskType} onChange={e => setDiskType(e.target.value)}><option value="">Sélectionner un type de disque</option>{Object.keys(diskTypes).map(x => <option key={x}>{x}</option>)}</select></label>
-        <label><span>Type de RAID</span><select value={raid} onChange={e => setRaid(e.target.value)}><option value="">Sélectionner un niveau RAID</option>{Object.entries(raidDefinitions).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
-        <label><span>Disques actifs</span><input type="number" min="1" step="1" placeholder="Nombre de disques" value={diskCount} onChange={e => setDiskCount(e.target.value)} /></label>
-        <label><span>Capacité par disque</span><div className="input-unit"><input type="number" step="1" placeholder="Capacité" value={diskSizeTB} onChange={e => setDiskSizeTB(e.target.value)} /><em>TB</em></div></label>
-        <label><span>Hot spares</span><input type="number" min="0" step="1" value={hotSpares} onChange={e => setHotSpares(Number(e.target.value))} /></label>
-        {grouped && <label className="wide"><span>Nombre de groupes</span><input type="number" min="2" step="1" value={groupCount} onChange={e => setGroupCount(Number(e.target.value))} /><small>{diskCount && groupCount ? `${number(Number(diskCount) / groupCount, 1)} disques actifs par groupe` : ''}</small></label>}
-      </div>
-      {definition && <div className="raid-info"><span>{definition.description}</span><strong>Coût d’écriture aléatoire ×{definition.writePenalty}</strong></div>}
-      <div className="advanced-options">
-        <strong>Options avancées</strong>
-        <label className="advanced-option"><input type="checkbox" checked={calculateIops} onChange={e => setCalculateIops(e.target.checked)} /><span>Calculer les IOPS selon le profil IO</span></label>
-        <label className="advanced-option"><input type="checkbox" checked={calculateRebuild} onChange={e => setCalculateRebuild(e.target.checked)} /><span>Estimer le temps de reconstruction (rebuild)</span></label>
-      </div>
-      {calculateIops && <div className="io-profile">
-        <Heading n="IO" title="Profil IO" badge="Charge applicative" />
-        <div className="form-grid">
-          <label className="wide"><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{Object.entries(ioProfiles).map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>
-          <label><span>Lecture</span><div className="input-unit"><input type="number" min="0" max="100" step="1" value={readPercent} onChange={e => updateReadPercent(e.target.value)} /><em>%</em></div></label>
-          <label><span>Écriture</span><div className="input-unit"><input type="number" min="0" max="100" step="1" value={100 - readPercent} onChange={e => updateReadPercent(100 - Number(e.target.value))} /><em>%</em></div></label>
-          <label><span>Type d’accès</span><select value={accessPattern} onChange={e => { setAccessPattern(e.target.value); setIoProfile('custom') }}><option value="random">Aléatoire (petites E/S)</option><option value="sequential">Séquentiel (flux contigus)</option></select></label>
-          <label><span>Taille de bloc</span><select value={blockSizeKiB} onChange={e => { setBlockSizeKiB(Number(e.target.value)); setIoProfile('custom') }}>{[4, 8, 16, 32, 64, 128, 256].map(size => <option key={size} value={size}>{size} KiB</option>)}</select></label>
+      <div className="raid-controls">
+        <div className="advanced-options">
+          <strong>Options avancées</strong>
+          <label className="advanced-option"><input type="checkbox" checked={calculateIops} onChange={e => setCalculateIops(e.target.checked)} /><span>Calculer les IOPS selon le profil IO</span></label>
+          <label className="advanced-option"><input type="checkbox" checked={calculateRebuild} onChange={e => setCalculateRebuild(e.target.checked)} /><span>Estimer le temps de reconstruction (rebuild)</span></label>
         </div>
-        <p className="profile-recommendation"><strong>Recommandation — {selectedProfile.label} :</strong> {selectedProfile.recommendation}</p>
-        <p className="profile-sum">Lecture + écriture : 100 % de la charge logique.</p>
-      </div>}
-      {!ready && <div className="invitation">Sélectionnez le disque, le RAID, le nombre et la capacité des disques</div>}{result.ready && !result.valid && <div className="error">{result.message}</div>}</article>
+        {calculateIops && <article className="panel io-profile">
+          <Heading n="IO" title="Profil IO" badge="Charge applicative" />
+          <div className="form-grid">
+            <label className="wide"><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{Object.entries(ioProfiles).map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>
+            <label><span>Lecture</span><div className="input-unit"><input type="number" min="0" max="100" step="1" value={readPercent} onChange={e => updateReadPercent(e.target.value)} /><em>%</em></div></label>
+            <label><span>Écriture</span><div className="input-unit"><input type="number" min="0" max="100" step="1" value={100 - readPercent} onChange={e => updateReadPercent(100 - Number(e.target.value))} /><em>%</em></div></label>
+            <label><span>Type d’accès</span><select value={accessPattern} onChange={e => { setAccessPattern(e.target.value); setIoProfile('custom') }}><option value="random">Aléatoire (petites E/S)</option><option value="sequential">Séquentiel (flux contigus)</option></select></label>
+            <label><span>Taille de bloc</span><select value={blockSizeKiB} onChange={e => { setBlockSizeKiB(Number(e.target.value)); setIoProfile('custom') }}>{[4, 8, 16, 32, 64, 128, 256].map(size => <option key={size} value={size}>{size} KiB</option>)}</select></label>
+          </div>
+          <p className="profile-recommendation"><strong>Recommandation — {selectedProfile.label} :</strong> {selectedProfile.recommendation}</p>
+          <p className="profile-sum">Lecture + écriture : 100 % de la charge logique.</p>
+        </article>}
+        <article className="panel"><Heading n="01" title="Configuration RAID" badge={definition?.label || 'À configurer'} /><div className="form-grid">
+          <label><span>Type de disque</span><select value={diskType} onChange={e => setDiskType(e.target.value)}><option value="">Sélectionner un type de disque</option>{Object.keys(diskTypes).map(x => <option key={x}>{x}</option>)}</select></label>
+          <label><span>Type de RAID</span><select value={raid} onChange={e => setRaid(e.target.value)}><option value="">Sélectionner un niveau RAID</option>{Object.entries(raidDefinitions).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
+          <label><span>Disques actifs</span><input type="number" min="1" step="1" placeholder="Nombre de disques" value={diskCount} onChange={e => setDiskCount(e.target.value)} /></label>
+          <label><span>Capacité par disque</span><div className="input-unit"><input type="number" step="1" placeholder="Capacité" value={diskSizeTB} onChange={e => setDiskSizeTB(e.target.value)} /><em>TB</em></div></label>
+          <label><span>Hot spares</span><input type="number" min="0" step="1" value={hotSpares} onChange={e => setHotSpares(Number(e.target.value))} /></label>
+          {grouped && <label className="wide"><span>Nombre de groupes</span><input type="number" min="2" step="1" value={groupCount} onChange={e => setGroupCount(Number(e.target.value))} /><small>{diskCount && groupCount ? `${number(Number(diskCount) / groupCount, 1)} disques actifs par groupe` : ''}</small></label>}
+        </div>
+        {definition && <div className="raid-info"><span>{definition.description}</span><strong>Coût d’écriture aléatoire ×{definition.writePenalty}</strong></div>}
+        {!ready && <div className="invitation">Sélectionnez le disque, le RAID, le nombre et la capacité des disques</div>}{result.ready && !result.valid && <div className="error">{result.message}</div>}</article>
+      </div>
       <article className="panel"><Heading n="02" title="Disque sélectionné" badge={disk?.technology || 'En attente'} />{disk ? <>
         <div className="disk-title"><strong>{diskType}</strong><span>{disk.technology} · {disk.interface} · {disk.workload}</span></div>
       <div className="disk-grid">

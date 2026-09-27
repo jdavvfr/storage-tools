@@ -63,8 +63,8 @@ export default function VolumeGrowthCalculator() {
             <div className="growth-calculator-input">
               <input
                 id="growth-source-volume"
-                type="text"
-                inputMode="decimal"
+                type="number"
+                step="1"
                 autoComplete="off"
                 placeholder="Volume source"
                 value={sourceVolume}
@@ -93,8 +93,8 @@ export default function VolumeGrowthCalculator() {
             <div className="growth-calculator-input growth-calculator-input--single">
               <input
                 id="growth-annual-rate"
-                type="text"
-                inputMode="decimal"
+                type="number"
+                step="1"
                 autoComplete="off"
                 placeholder="Taux de croissance annuel"
                 value={annualGrowthRate}
@@ -117,8 +117,8 @@ export default function VolumeGrowthCalculator() {
             <div className="growth-calculator-input growth-calculator-input--single">
               <input
                 id="growth-years"
-                type="text"
-                inputMode="numeric"
+                type="number"
+                step="1"
                 autoComplete="off"
                 placeholder="Nombre d'années"
                 value={years}

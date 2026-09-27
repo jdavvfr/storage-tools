@@ -62,8 +62,8 @@ export default function CapacityConverter() {
             <div className="input-unit">
               <input
                 id="capacity-tb"
-                type="text"
-                inputMode="decimal"
+                type="number"
+                step="1"
                 autoComplete="off"
                 placeholder="Capacité To"
                 value={values.tb}
@@ -81,8 +81,8 @@ export default function CapacityConverter() {
             <div className="input-unit">
               <input
                 id="capacity-tib"
-                type="text"
-                inputMode="decimal"
+                type="number"
+                step="1"
                 autoComplete="off"
                 placeholder="Capacité TiB"
                 value={values.tib}

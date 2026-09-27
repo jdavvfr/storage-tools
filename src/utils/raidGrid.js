@@ -46,5 +46,9 @@ export function getRaidGridConfig(raid, groups) {
     }
   }
 
+  if (groups.length === 1) {
+    return { className: 'raid-groups--single-group', style: undefined }
+  }
+
   return { className: '', style: undefined }
 }

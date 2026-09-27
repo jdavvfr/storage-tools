@@ -36,9 +36,15 @@ test('RAID10 fits up to eight groups on wide screens and wraps responsively', ()
   assert.equal(getRaidGridConfig('RAID10', groups(3)).style['--raid-columns'], 3)
 })
 
-test('other RAID modes keep their existing grid styles', () => {
-  assert.deepEqual(getRaidGridConfig('RAID5', groups(1)), {
-    className: '',
-    style: undefined
-  })
+test('single-group RAID5 and RAID6 cards span the full grid width', () => {
+  for (const raid of ['RAID5', 'RAID6']) {
+    assert.deepEqual(getRaidGridConfig(raid, groups(1)), {
+      className: 'raid-groups--single-group',
+      style: undefined
+    })
+  }
+})
+
+test('single-group non-nested RAID modes also span the full grid width', () => {
+  assert.equal(getRaidGridConfig('RAID1', groups(1)).className, 'raid-groups--single-group')
 })

@@ -8,6 +8,10 @@
   gap: 14px;
 }
 
+.raid-groups--single-group > .raid-group:not(.raid-group--spares) {
+  grid-column: 1 / -1;
+}
+
 .raid-group {
   min-width: 0;
   padding: 16px;

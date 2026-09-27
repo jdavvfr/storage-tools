@@ -367,21 +367,12 @@ export const translations = {
     'La taille de bloc doit être supérieure à 0 KiB': 'Block size must be greater than 0 KiB'
   },
   fr: {
-    'STORAGE TOOLS': 'Storage Tools',
+    'STORAGE TOOLS': 'STORAGE TOOLS',
     'Outils de stockage': 'Storage Tools',
     'RAID Calculator': 'RAID Calculator',
     'RAID Calculator Basic': 'RAID Calculator Basic',
     'RAID Calculator Advanced': 'RAID Calculator Advanced',
-    'Convertisseur To / TiB': 'TB / TiB Converter',
-    'Durée de copie': 'Copy Duration',
-    'Croissance volumétrique': 'Volume Growth',
-    'Tape LTO': 'LTO Tape',
     'Outils Tape LTO': 'LTO Tape Tools',
-    'Hot spares': 'Disques de secours',
-    'Capacitif': 'Orienté capacité',
-    'Read Intensive': 'Lecture intensive',
-    'Mixed Use': 'Usage mixte',
-    'Write Intensive': 'Écriture intensive'
   }
 }
 

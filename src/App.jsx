@@ -57,7 +57,7 @@ function App() {
       <header className="hero">
         <span>{t('STORAGE TOOLS')}</span>
         <h1>{t(activeTool === 'raid' ? (language === 'fr' ? 'RAID Calculator Basic' : 'RAID Calculator') : activeTool === 'raid-advanced' ? 'RAID Calculator Advanced' : activeTool === 'converter' ? 'Convertisseur To / TiB' : activeTool === 'copy' ? 'Durée de copie' : activeTool === 'growth' ? 'Croissance volumétrique' : 'Outils Tape LTO')}</h1>
-        <p>{t(activeTool === 'raid' ? 'Dimensionnement RAID avec capacité, performances et organisation' : activeTool === 'raid-advanced' ? 'Dimensionnement RAID, estimation des IOPS et analyse de reconstruction selon le profil IO' : activeTool === 'converter' ? 'Conversion rapide entre capacités décimales et binaires' : activeTool === 'copy' ? 'Estimation du temps nécessaire pour transférer un volume de données' : activeTool === 'growth' ? 'Projection d’une volumétrie avec un taux de croissance annuel composé' : 'Dimensionnement et estimation d’écriture sur cartouches LTO')}</p>
+        <p>{t(activeTool === 'raid' ? 'Dimensionnement RAID avec capacité, performances et organisation' : activeTool === 'raid-advanced' ? 'Dimensionnement RAID, estimation des IOPS et analyse de reconstruction selon le profil IO' : activeTool === 'converter' ? 'Conversion rapide entre capacités décimales et binaires' : activeTool === 'copy' ? 'Estimation du temps nécessaire pour transférer un volume de données' : activeTool === 'growth' ? 'Projection d’une volumétrie avec un taux de croissance annuel composé' : 'Dimensionnement et estimation d’écriture sur cartouches LTO')}
         <ToolInfoPopover key={activeTool} {...TOOL_INFO[activeTool]} />
       </header>
       {activeTool === 'copy' && <CopyDurationEstimator />}

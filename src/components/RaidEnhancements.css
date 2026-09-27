@@ -4,10 +4,12 @@
 
 .raid-groups {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: 14px;
 }
 
 .raid-group {
+  min-width: 0;
   padding: 16px;
   border: 1px solid #263c5c;
   border-radius: 16px;
@@ -124,6 +126,10 @@
 }
 
 @media (max-width: 640px) {
+  .raid-groups {
+    grid-template-columns: 1fr;
+  }
+
   .raid-group header {
     align-items: flex-start;
     flex-direction: column;

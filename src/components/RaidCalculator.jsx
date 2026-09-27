@@ -232,7 +232,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
 
     {advanced && validComparison.length > 0 && selectedResult && <>
       <section className="panel"><Heading n="04" title={t('Comparaison RAID')} badge={`${readPercent} % ${t('lecture')} · ${100 - readPercent} % ${t('écriture')} · ${blockSizeKiB} KiB`} />
-        <p className="profile-sum">{t('Sélectionnez une ligne (Entrée ou Espace au clavier) pour afficher ce niveau RAID dans l’organisation et l’analyse de reconstruction.')}</p>
+        <p className="profile-sum">{t('Sélectionnez une ligne pour afficher ce niveau RAID dans l’organisation et l’analyse de reconstruction.')}</p>
         <div className="table-wrap">
           <table aria-label={t('Comparaison RAID')}>
             <thead><tr>{comparisonSortOptions.map(({ key, label }) => {

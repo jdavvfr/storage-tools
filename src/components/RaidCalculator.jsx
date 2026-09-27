@@ -15,6 +15,12 @@ const comparisonSortOptions = [
   { key: 'readBandwidthMBps', label: 'DÉBIT LECTURE' },
   { key: 'readIops', label: 'IOPS LECTURE' }
 ]
+const diskPerformanceFields = [
+  { key: 'readIops', label: 'IOPS lecture', unit: 'IOPS', format: formatIops },
+  { key: 'writeIops', label: 'IOPS écriture', unit: 'IOPS', format: formatIops },
+  { key: 'readBandwidthMBps', label: 'Débit lecture', unit: 'Mo/s', format: bandwidth },
+  { key: 'writeBandwidthMBps', label: 'Débit écriture', unit: 'Mo/s', format: bandwidth }
+]
 
 function Heading({ n, title, badge }) { return <div className="heading"><div><span>{n}</span><h2>{title}</h2></div><b>{badge}</b></div> }
 function Stars({ value }) { return <span className="stars" role="img" aria-label={`Résilience : ${value} sur 5`}>{[1,2,3,4,5].map(x => <i key={x} className={x <= value ? 'on' : ''} />)}</span> }
@@ -39,6 +45,7 @@ function ComparisonIndicator({ value, selectedValue, lowerIsBetter = false, metr
 export default function RaidCalculator({ active = true, advanced = false }) {
   const [raid, setRaid] = useState('')
   const [diskType, setDiskType] = useState('')
+  const [diskPerformanceValues, setDiskPerformanceValues] = useState({})
   const [diskCount, setDiskCount] = useState('')
   const [hotSpares, setHotSpares] = useState(0)
   const [diskSizeTB, setDiskSizeTB] = useState('')
@@ -57,9 +64,25 @@ export default function RaidCalculator({ active = true, advanced = false }) {
   const [comparisonSort, setComparisonSort] = useState(null)
 
   const disk = diskTypes[diskType]
+  const currentDiskPerformanceValues = disk
+    ? Object.fromEntries(diskPerformanceFields.map(({ key }) => [key, diskPerformanceValues[key] ?? String(disk[key])]))
+    : {}
+  const customizedDiskPerformance = disk && diskPerformanceFields.some(({ key }) =>
+    Number(currentDiskPerformanceValues[key]) !== disk[key]
+  )
+  const calculationDisk = disk && advanced
+    ? {
+        ...disk,
+        ...Object.fromEntries(diskPerformanceFields.map(({ key }) => [key, Number(currentDiskPerformanceValues[key])]))
+      }
+    : disk
+  const validDiskPerformance = disk && diskPerformanceFields.every(({ key }) => {
+    const value = Number(currentDiskPerformanceValues[key])
+    return Number.isFinite(value) && value > 0
+  })
   const definition = raidDefinitions[raid]
   const grouped = ['RAID50', 'RAID60'].includes(raid)
-  const args = { raid, diskCount, hotSpares, diskSizeTB, groupCount, disk, rebuildLoad, readPercent, accessPattern, blockSizeKiB, calculateIops, calculateRebuild }
+  const args = { raid, diskCount, hotSpares, diskSizeTB, groupCount, disk: calculationDisk, rebuildLoad, readPercent, accessPattern, blockSizeKiB, calculateIops, calculateRebuild }
   const result = calculateRaid(args)
   const comparison = advanced ? buildRaidComparison(args) : []
   const validComparison = comparison.filter(row => row.result.valid)
@@ -97,12 +120,22 @@ export default function RaidCalculator({ active = true, advanced = false }) {
     setAccessPattern(profile.accessPattern)
     setBlockSizeKiB(profile.blockSizeKiB)
   }
+  const selectDiskType = value => {
+    updateParameter(setDiskType, value)
+    setDiskPerformanceValues(value
+      ? Object.fromEntries(diskPerformanceFields.map(({ key }) => [key, String(diskTypes[value][key])]))
+      : {})
+  }
+  const updateDiskPerformance = (key, value) => {
+    setParameterRevision(revision => revision + 1)
+    setDiskPerformanceValues(previous => ({ ...previous, [key]: value }))
+  }
 
   return <div hidden={!active}>
     <section className={`raid-layout raid-layout--${advanced ? 'advanced' : 'basic'}`}>
       <div className="raid-parameter-grid">
         <article className="panel"><Heading n="01" title="Configuration RAID" badge={definition?.label || 'À configurer'} /><div className="form-grid">
-          <label><span>Type de disque</span><select value={diskType} onChange={e => updateParameter(setDiskType, e.target.value)}><option value="">Sélectionner un type de disque</option>{Object.keys(diskTypes).map(x => <option key={x}>{x}</option>)}</select></label>
+          <label><span>Type de disque</span><select value={diskType} onChange={e => selectDiskType(e.target.value)}><option value="">Sélectionner un type de disque</option>{Object.keys(diskTypes).map(x => <option key={x}>{x}</option>)}</select></label>
           <label><span>Type de RAID</span><select value={raid} onChange={e => updateParameter(setRaid, e.target.value)}><option value="">Sélectionner un niveau RAID</option>{Object.entries(raidDefinitions).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
           <label><span>Disques actifs</span><input type="number" min="1" step="1" placeholder="Nombre de disques" value={diskCount} onChange={e => updateParameter(setDiskCount, e.target.value)} /></label>
           <label><span>Capacité par disque</span><div className="input-unit"><input type="number" step="1" placeholder="Capacité" value={diskSizeTB} onChange={e => updateParameter(setDiskSizeTB, e.target.value)} /><em>TB</em></div></label>
@@ -136,16 +169,36 @@ export default function RaidCalculator({ active = true, advanced = false }) {
           <p className="profile-sum">Valeurs indicatives du calculateur, non rattachées à une référence constructeur.</p>
           </> : <div className="empty">Les caractéristiques du disque apparaîtront ici</div>}</article>}
       </div>
-      {advanced && <article className="panel raid-disk-panel"><Heading n="03" title="Disque sélectionné" badge={disk?.technology || 'En attente'} />{disk ? <>
+      {advanced && <article className="panel raid-disk-panel"><Heading n="03" title="Disque sélectionné" badge={disk ? `${disk.technology}${customizedDiskPerformance ? ' · Personnalisé' : ''}` : 'En attente'} />{disk ? <>
         <div className="disk-title"><strong>{diskType}</strong><span>{disk.technology} · {disk.interface} · {disk.workload}</span></div>
         <div className="disk-grid">
-          <div><span>IOPS lecture de référence</span><strong>{formatIops(disk.readIops)}</strong></div>
-          <div><span>IOPS écriture de référence</span><strong>{formatIops(disk.writeIops)}</strong></div>
-          <div><span>Débit lecture</span><strong>{bandwidth(disk.readBandwidthMBps)}</strong></div>
-          <div><span>Débit écriture</span><strong>{bandwidth(disk.writeBandwidthMBps)}</strong></div>
-          <div><span>Débit rebuild retenu</span><strong>{bandwidth(disk.rebuildMBps)}</strong></div>
+          {diskPerformanceFields.map(({ key, label, unit, format }) => (
+            <label key={key}>
+              <span>{label} — valeur de calcul</span>
+              <div className="input-unit">
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={currentDiskPerformanceValues[key]}
+                  aria-invalid={!Number.isFinite(Number(currentDiskPerformanceValues[key])) || Number(currentDiskPerformanceValues[key]) <= 0}
+                  aria-describedby={`${key}-reference`}
+                  onChange={event => updateDiskPerformance(key, event.target.value)}
+                />
+                <em>{unit}</em>
+              </div>
+              <small id={`${key}-reference`}>Référence indicative : {format(disk[key])}</small>
+            </label>
+          ))}
+          <div><span>Débit rebuild nominal retenu</span><strong>{bandwidth(disk.rebuildMBps)}</strong></div>
         </div>
-        <p className="profile-sum">Valeurs indicatives du calculateur, non rattachées à une référence constructeur.</p>
+        <p className="profile-sum">
+          {customizedDiskPerformance
+            ? 'Au moins une valeur de performance est personnalisée et utilisée dans les calculs. Les références sont indicatives, non rattachées à une référence constructeur.'
+            : 'Valeurs de référence indicatives du calculateur, non rattachées à une référence constructeur.'}
+          {' '}Le débit rebuild reste nominal et indépendant de ces réglages.
+        </p>
+        {!validDiskPerformance && !result.ready && <p className="error" role="alert">Chaque valeur de performance doit être un nombre fini supérieur à 0.</p>}
         </> : <div className="empty">Les caractéristiques du disque apparaîtront ici</div>}</article>}
     </section>
 
@@ -167,7 +220,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
     </>}
 
     {advanced && validComparison.length > 0 && selectedResult && <>
-      <section className="panel"><Heading n="04" title="Comparaison RAID" badge={`${readPercent} % lecture · ${100 - readPercent} % écriture`} />
+      <section className="panel"><Heading n="04" title="Comparaison RAID" badge={`${readPercent} % lecture · ${100 - readPercent} % écriture · ${blockSizeKiB} KiB`} />
         <p className="profile-sum">Sélectionnez une ligne (Entrée ou Espace au clavier) pour afficher ce niveau RAID dans l’organisation et l’analyse de reconstruction.</p>
         <div className="table-wrap">
           <table aria-label="Comparaison RAID">
@@ -192,7 +245,10 @@ export default function RaidCalculator({ active = true, advanced = false }) {
             })}<th>DÉBIT ÉCRITURE</th><th>IOPS ÉCRITURE</th><th>REBUILD RÉALISTE</th><th>RÉSILIENCE</th></tr></thead>
             <tbody>{sortedComparison.map(x => {
               const isSelected = x.raid === selectedComparisonRaid
-              const selectRow = () => setManualSelection({ parameterRevision, raid: x.raid })
+              const selectRow = () => {
+                setManualSelection({ parameterRevision, raid: x.raid })
+                setRaid(x.raid)
+              }
 
               return <tr
                 key={x.raid}

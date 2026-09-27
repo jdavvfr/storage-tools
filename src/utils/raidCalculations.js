@@ -83,6 +83,13 @@ export function calculateRaid({
   const writeRatio = 1 - readRatio
   const blockSize = Number(blockSizeKiB)
   if (!definition || !disk || !active || !sizeTB) return { ready: false, valid: false, message: '' }
+  const diskMetrics = [disk.readIops, disk.writeIops, disk.readBandwidthMBps, disk.writeBandwidthMBps]
+  if (diskMetrics.some(value => !Number.isFinite(Number(value)) || Number(value) <= 0)) {
+    return { ready: true, valid: false, message: 'Les performances du disque doivent être des nombres finis supérieurs à 0' }
+  }
+  if (calculateRebuild && definition.rebuildSupported && (!Number.isFinite(Number(disk.rebuildMBps)) || Number(disk.rebuildMBps) <= 0)) {
+    return { ready: true, valid: false, message: 'Le débit nominal de rebuild doit être un nombre fini supérieur à 0' }
+  }
   const message = validate(raid, active, spares, sizeTB, groups, readRatio, accessPattern, blockSize, calculateIops)
   if (message) return { ready: true, valid: false, message }
 

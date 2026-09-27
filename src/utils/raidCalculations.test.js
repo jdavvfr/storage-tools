@@ -36,6 +36,43 @@ test('IOPS and rebuild estimates can be enabled together', () => {
   assert.equal(comparisonRow.result.rebuild.realistic, result.rebuild.realistic)
 })
 
+test('custom disk performance drives IOPS, bandwidth, and comparison without changing nominal rebuild', () => {
+  const customizedDisk = {
+    ...disk,
+    readIops: 50,
+    writeIops: 25,
+    readBandwidthMBps: 300,
+    writeBandwidthMBps: 400
+  }
+  const args = { ...comparisonArgs, disk: customizedDisk, raid: 'RAID5' }
+  const result = calculateRaid(args)
+  const comparisonRow = buildRaidComparison(args).find(row => row.raid === 'RAID5')
+  const referenceResult = calculateRaid({ ...args, disk })
+
+  assert.equal(result.valid, true)
+  assert.equal(result.effectiveDiskReadIops, 50)
+  assert.equal(result.effectiveDiskWriteIops, 25)
+  assert.equal(result.readBandwidthMBps, 8 * 300)
+  assert.equal(result.writeBandwidthMBps, 7 * 400)
+  assert.notEqual(result.totalIops, referenceResult.totalIops)
+  assert.equal(comparisonRow.result.totalIops, result.totalIops)
+  assert.equal(comparisonRow.result.readBandwidthMBps, result.readBandwidthMBps)
+  assert.equal(result.rebuild.optimistic, referenceResult.rebuild.optimistic)
+})
+
+test('invalid disk performance values are rejected before estimates are calculated', () => {
+  for (const value of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+    const result = calculateRaid({
+      ...comparisonArgs,
+      raid: 'RAID5',
+      disk: { ...disk, readIops: value }
+    })
+
+    assert.equal(result.valid, false)
+    assert.match(result.message, /performances du disque/)
+  }
+})
+
 test('capacity remains available when IOPS and rebuild calculations are disabled independently', () => {
   const full = calculateRaid({ ...comparisonArgs, raid: 'RAID5' })
   const capacityOnly = calculateRaid({ ...comparisonArgs, raid: 'RAID5', calculateIops: false, calculateRebuild: false })

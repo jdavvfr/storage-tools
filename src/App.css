@@ -334,7 +334,8 @@ input[aria-invalid="true"] {
   gap: 12px;
 }
 
-.disk-grid div {
+.disk-grid > div,
+.disk-grid > label {
   display: flex;
   flex-direction: column;
   gap: 7px;
@@ -347,6 +348,11 @@ input[aria-invalid="true"] {
 .disk-grid span {
   color: #7589a1;
   font-size: 0.75rem;
+}
+
+.disk-grid label small {
+  color: #71869e;
+  font-size: 0.72rem;
 }
 
 .pib-check {

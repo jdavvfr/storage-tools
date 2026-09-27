@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { parseCapacityInput } from '../utils/raidCalculations'
 import { calculateCopyDurationSeconds, formatCopyDuration } from '../utils/copyDuration'
+import { useLanguage } from '../LanguageContext'
 import AboutSection from './AboutSection'
 
 const volumeUnits = [
@@ -20,6 +21,7 @@ const throughputUnits = [
 ]
 
 export default function CopyDurationEstimator() {
+  const { language, t } = useLanguage()
   const [volume, setVolume] = useState('')
   const [volumeUnit, setVolumeUnit] = useState('Go')
   const [throughput, setThroughput] = useState('')
@@ -43,34 +45,33 @@ export default function CopyDurationEstimator() {
     <>
       <section className="copy-estimator panel" aria-labelledby="copy-estimator-title">
         <div className="section-intro">
-          <span>ESTIMATION DE TRANSFERT</span>
-          <h2 id="copy-estimator-title">Combien de temps prendra la copie ?</h2>
+          <span>{t('ESTIMATION DE TRANSFERT')}</span>
+          <h2 id="copy-estimator-title">{t('Combien de temps prendra la copie ?')}</h2>
           <p>
-            Indiquez le volume de données et le débit de transfert pour obtenir une estimation
-            théorique.
+            {t('Indiquez le volume de données et le débit de transfert pour obtenir une estimation théorique.')}
           </p>
         </div>
         <div className="copy-estimator-grid">
           <div className="copy-estimator-field">
-            <label htmlFor="copy-volume">Volume de données</label>
+            <label htmlFor="copy-volume">{t('Volume de données')}</label>
             <div className="copy-estimator-input">
               <input
                 id="copy-volume"
                 type="number"
                 step="1"
                 autoComplete="off"
-                placeholder="Volume de données"
+                placeholder={t('Volume de données')}
                 value={volume}
                 onChange={event => setVolume(event.target.value)}
                 aria-invalid={Boolean(volumeError)}
                 aria-describedby="copy-volume-help"
               />
               <select
-                aria-label="Unité du volume"
+                aria-label={t('Unité du volume')}
                 value={volumeUnit}
                 onChange={event => setVolumeUnit(event.target.value)}
               >
-                {volumeUnits.map(([unit, label]) => <option key={unit} value={unit}>{label}</option>)}
+                {volumeUnits.map(([unit, label]) => <option key={unit} value={unit}>{t(label)}</option>)}
               </select>
             </div>
             <small
@@ -78,29 +79,29 @@ export default function CopyDurationEstimator() {
               className={volumeError ? 'field-error' : ''}
               role={volumeError ? 'alert' : undefined}
             >
-              {volumeError || 'Les unités Go/Mo sont décimales ; GiB/MiB sont binaires.'}
+              {t(volumeError || 'Les unités Go/Mo sont décimales ; GiB/MiB sont binaires.')}
             </small>
           </div>
           <div className="copy-estimator-field">
-            <label htmlFor="copy-throughput">Débit de transfert</label>
+            <label htmlFor="copy-throughput">{t('Débit de transfert')}</label>
             <div className="copy-estimator-input">
               <input
                 id="copy-throughput"
                 type="number"
                 step="1"
                 autoComplete="off"
-                placeholder="Débit de transfert"
+                placeholder={t('Débit de transfert')}
                 value={throughput}
                 onChange={event => setThroughput(event.target.value)}
                 aria-invalid={Boolean(throughputError)}
                 aria-describedby="copy-throughput-help"
               />
               <select
-                aria-label="Unité du débit"
+                aria-label={t('Unité du débit')}
                 value={throughputUnit}
                 onChange={event => setThroughputUnit(event.target.value)}
               >
-                {throughputUnits.map(([unit, label]) => <option key={unit} value={unit}>{label}</option>)}
+                {throughputUnits.map(([unit, label]) => <option key={unit} value={unit}>{t(label)}</option>)}
               </select>
             </div>
             <small
@@ -108,53 +109,52 @@ export default function CopyDurationEstimator() {
               className={throughputError ? 'field-error' : ''}
               role={throughputError ? 'alert' : undefined}
             >
-              {throughputError || 'Les débits en bit/s sont convertis en octets/s (8 bits = 1 octet).'}
+              {t(throughputError || 'Les débits en bit/s sont convertis en octets/s (8 bits = 1 octet).')}
             </small>
           </div>
         </div>
         {calculationError
-          ? <p className="error copy-estimator-error" role="alert">La durée calculée est trop grande pour être représentée.</p>
+          ? <p className="error copy-estimator-error" role="alert">{t('La durée calculée est trop grande pour être représentée.')}</p>
           : ready && <div className="copy-estimator-result" aria-live="polite">
-            <span>Durée théorique estimée</span>
-            <strong>{formatCopyDuration(durationSeconds)}</strong>
+            <span>{t('Durée théorique estimée')}</span>
+            <strong>{formatCopyDuration(durationSeconds, language)}</strong>
           </div>}
         <p className="copy-estimator-note">
-          Cette estimation suppose un débit constant et ne tient pas compte des ralentissements, du
-          protocole, des temps d’accès ni des autres activités du système.
+          {t('Cette estimation suppose un débit constant et ne tient pas compte des ralentissements, du protocole, des temps d’accès ni des autres activités du système.')}
         </p>
       </section>
       <AboutSection
         className="about-section--centered"
-        eyebrow="À PROPOS DE L’ESTIMATION"
-        title="Estimez une durée de transfert théorique"
-        description="Associez un volume de données à un débit pour obtenir une estimation immédiate, que les unités soient décimales, binaires ou exprimées en bits."
+        eyebrow={t('À PROPOS DE L’ESTIMATION')}
+        title={t('Estimez une durée de transfert théorique')}
+        description={t('Associez un volume de données à un débit pour obtenir une estimation immédiate, que les unités soient décimales, binaires ou exprimées en bits.')}
         items={[
           {
             icon: 'capacity',
-            label: 'Volume',
-            value: '4 unités',
-            description: 'Saisissez des octets Mo, Go, MiB ou GiB.'
+            label: t('Volume'),
+            value: t('4 unités'),
+            description: t('Saisissez des octets Mo, Go, MiB ou GiB.')
           },
           {
             icon: 'performance',
-            label: 'Débit',
-            value: '4 unités',
-            description: 'Choisissez un débit en octets par seconde ou en bits par seconde.'
+            label: t('Débit'),
+            value: t('4 unités'),
+            description: t('Choisissez un débit en octets par seconde ou en bits par seconde.')
           },
           {
             icon: 'resilience',
-            label: 'Calcul',
-            value: 'Instantané',
-            description: 'La durée est recalculée à chaque modification du volume ou du débit.'
+            label: t('Calcul'),
+            value: t('Instantané'),
+            description: t('La durée est recalculée à chaque modification du volume ou du débit.')
           },
           {
             icon: 'rebuild',
-            label: 'Hypothèse',
-            value: 'Débit constant',
-            description: 'L’estimation ne modélise ni les ralentissements ni les temps d’accès.'
+            label: t('Hypothèse'),
+            value: t('Débit constant'),
+            description: t('L’estimation ne modélise ni les ralentissements ni les temps d’accès.')
           }
         ]}
-        highlights={['Unités décimales et binaires', 'Conversion des bits en octets', 'Aucune donnée envoyée']}
+        highlights={['Unités décimales et binaires', 'Conversion des bits en octets', 'Aucune donnée envoyée'].map(t)}
       />
     </>
   )

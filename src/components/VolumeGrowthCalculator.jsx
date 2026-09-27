@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { parseCapacityInput } from '../utils/raidCalculations'
 import { calculateVolumeGrowth } from '../utils/volumeGrowth'
+import { useLanguage } from '../LanguageContext'
 import AboutSection from './AboutSection'
 
 const volumeUnits = [
@@ -12,15 +13,15 @@ const volumeUnits = [
   ['PiB', 'PiB'],
 ]
 
-const formatVolume = value => new Intl.NumberFormat('fr-FR', {
-  maximumSignificantDigits: 12
-}).format(value)
-
 export default function VolumeGrowthCalculator() {
+  const { language, t } = useLanguage()
   const [sourceVolume, setSourceVolume] = useState('')
   const [volumeUnit, setVolumeUnit] = useState('To')
   const [annualGrowthRate, setAnnualGrowthRate] = useState('')
   const [years, setYears] = useState('')
+  const formatVolume = value => new Intl.NumberFormat(language === 'en' ? 'en-GB' : 'fr-FR', {
+    maximumSignificantDigits: 12
+  }).format(value)
 
   const parsedSourceVolume = parseCapacityInput(sourceVolume)
   const parsedGrowthRate = parseCapacityInput(annualGrowthRate)
@@ -51,33 +52,33 @@ export default function VolumeGrowthCalculator() {
     <>
       <section className="growth-calculator panel" aria-labelledby="growth-calculator-title">
         <div className="section-intro">
-          <span>PROJECTION DE CAPACITÉ</span>
-          <h2 id="growth-calculator-title">Calculez la croissance d’une volumétrie</h2>
+          <span>{t('PROJECTION DE CAPACITÉ')}</span>
+          <h2 id="growth-calculator-title">{t('Calculez la croissance d’une volumétrie')}</h2>
           <p>
-            Projetez un volume sur plusieurs années à partir d’un taux de croissance annuel composé.
+            {t('Projetez un volume sur plusieurs années à partir d’un taux de croissance annuel composé.')}
           </p>
         </div>
         <div className="growth-calculator-grid">
           <div className="growth-calculator-field">
-            <label htmlFor="growth-source-volume">Volume source</label>
+            <label htmlFor="growth-source-volume">{t('Volume source')}</label>
             <div className="growth-calculator-input">
               <input
                 id="growth-source-volume"
                 type="number"
                 step="1"
                 autoComplete="off"
-                placeholder="Volume source"
+                placeholder={t('Volume source')}
                 value={sourceVolume}
                 onChange={event => setSourceVolume(event.target.value)}
                 aria-invalid={Boolean(sourceVolumeError)}
                 aria-describedby="growth-source-volume-help"
               />
               <select
-                aria-label="Unité du volume source"
+                aria-label={t('Unité du volume source')}
                 value={volumeUnit}
                 onChange={event => setVolumeUnit(event.target.value)}
               >
-                {volumeUnits.map(([unit, label]) => <option key={unit} value={unit}>{label}</option>)}
+                {volumeUnits.map(([unit, label]) => <option key={unit} value={unit}>{t(label)}</option>)}
               </select>
             </div>
             <small
@@ -85,18 +86,18 @@ export default function VolumeGrowthCalculator() {
               className={sourceVolumeError ? 'field-error' : ''}
               role={sourceVolumeError ? 'alert' : undefined}
             >
-              {sourceVolumeError || 'La volumétrie cible conserve cette unité.'}
+              {t(sourceVolumeError || 'La volumétrie cible conserve cette unité.')}
             </small>
           </div>
           <div className="growth-calculator-field">
-            <label htmlFor="growth-annual-rate">Taux de croissance annuel</label>
+            <label htmlFor="growth-annual-rate">{t('Taux de croissance annuel')}</label>
             <div className="growth-calculator-input growth-calculator-input--single">
               <input
                 id="growth-annual-rate"
                 type="number"
                 step="1"
                 autoComplete="off"
-                placeholder="Taux de croissance annuel"
+                placeholder={t('Taux de croissance annuel')}
                 value={annualGrowthRate}
                 onChange={event => setAnnualGrowthRate(event.target.value)}
                 aria-invalid={Boolean(growthRateError)}
@@ -109,77 +110,76 @@ export default function VolumeGrowthCalculator() {
               className={growthRateError ? 'field-error' : ''}
               role={growthRateError ? 'alert' : undefined}
             >
-              {growthRateError || 'Taux composé appliqué une fois par année.'}
+              {t(growthRateError || 'Taux composé appliqué une fois par année.')}
             </small>
           </div>
           <div className="growth-calculator-field">
-            <label htmlFor="growth-years">Nombre d’années</label>
+            <label htmlFor="growth-years">{t('Nombre d’années')}</label>
             <div className="growth-calculator-input growth-calculator-input--single">
               <input
                 id="growth-years"
                 type="number"
                 step="1"
                 autoComplete="off"
-                placeholder="Nombre d'années"
+                placeholder={t("Nombre d'années")}
                 value={years}
                 onChange={event => setYears(event.target.value)}
                 aria-invalid={Boolean(yearsError)}
                 aria-describedby="growth-years-help"
               />
-              <span aria-hidden="true">ans</span>
+              <span aria-hidden="true">{t('ans')}</span>
             </div>
             <small
               id="growth-years-help"
               className={yearsError ? 'field-error' : ''}
               role={yearsError ? 'alert' : undefined}
             >
-              {yearsError || 'Indiquez un nombre entier d’années.'}
+              {t(yearsError || 'Indiquez un nombre entier d’années.')}
             </small>
           </div>
         </div>
         {calculationError
-          ? <p className="error growth-calculator-error" role="alert">La volumétrie calculée est trop grande pour être représentée.</p>
+          ? <p className="error growth-calculator-error" role="alert">{t('La volumétrie calculée est trop grande pour être représentée.')}</p>
           : ready && <div className="growth-calculator-result" aria-live="polite">
-            <span>Volumétrie cible après {parsedYears} an{parsedYears > 1 ? 's' : ''}</span>
-            <strong>{formatVolume(targetVolume)} {volumeUnit}</strong>
+            <span>{t('Volumétrie cible après')} {parsedYears} {t(parsedYears > 1 ? 'ans' : 'an')}</span>
+            <strong>{formatVolume(targetVolume)} {t(volumeUnit)}</strong>
           </div>}
         <p className="growth-calculator-note">
-          Formule : volume source × (1 + taux annuel / 100)<sup>nombre d’années</sup>. Le calcul
-          suppose un taux annuel constant.
+          {t('Formule : volume source × (1 + taux annuel / 100)^nombre d’années. Le calcul suppose un taux annuel constant.')}
         </p>
       </section>
       <AboutSection
         className="about-section--centered"
-        eyebrow="À PROPOS DE LA PROJECTION"
-        title="Anticipez l’évolution de votre stockage"
-        description="Estimez la volumétrie à prévoir avec un taux de croissance annuel composé, sans conversion de l’unité choisie."
+        eyebrow={t('À PROPOS DE LA PROJECTION')}
+        title={t('Anticipez l’évolution de votre stockage')}
+        description={t('Estimez la volumétrie à prévoir avec un taux de croissance annuel composé, sans conversion de l’unité choisie.')}
         items={[
           {
             icon: 'capacity',
-            label: 'Volume',
-            value: '6 unités',
-            description: 'Saisissez un volume en Go, To, Po, GiB, TiB ou PiB.'
+            label: t('Volume'),
+            value: t('6 unités'),
+            description: t('Saisissez un volume en Go, To, Po, GiB, TiB ou PiB.')
           },
           {
             icon: 'performance',
-            label: 'Croissance',
-            value: 'Composée',
-            description: 'Le taux annuel est appliqué au volume obtenu l’année précédente.'
+            label: t('Croissance'),
+            value: t('Composée'),
+            description: t('Le taux annuel est appliqué au volume obtenu l’année précédente.')
           },
           {
             icon: 'resilience',
-            label: 'Projection',
-            value: 'Multi-annuelle',
-            description: 'Indiquez un nombre entier d’années pour calculer la volumétrie cible.'
+            label: t('Projection'),
+            value: t('Multi-annuelle'),
+            description: t('Indiquez un nombre entier d’années pour calculer la volumétrie cible.')
           },
           {
             icon: 'rebuild',
-            label: 'Résultat',
-            value: 'Même unité',
-            description: 'La cible est affichée dans l’unité du volume source.'
+            label: t('Résultat'),
+            value: t('Même unité'),
+            description: t('La cible est affichée dans l’unité du volume source.')
           }
         ]}
-        highlights={['Taux composé annuel', 'Virgule ou point décimal', 'Aucune donnée envoyée']}
+        highlights={['Taux composé annuel', 'Virgule ou point décimal', 'Aucune donnée envoyée'].map(t)}
       />
     </>
   )

@@ -36,3 +36,9 @@ test('formats estimates as readable French durations rounded up to a second', ()
   assert.equal(formatCopyDuration(86_400), '1 jour')
   assert.equal(formatCopyDuration(0.2), '1 seconde')
 })
+
+test('formats estimates as readable English durations', () => {
+  assert.equal(formatCopyDuration(3_661, 'en'), '1 hour and 1 minute')
+  assert.equal(formatCopyDuration(86_400, 'en'), '1 day')
+  assert.equal(formatCopyDuration(0.2, 'en'), '1 second')
+})

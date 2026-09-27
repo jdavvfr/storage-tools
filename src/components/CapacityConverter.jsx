@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { parseCapacityInput, tbToTiB, tiBToTB } from '../utils/raidCalculations'
+import { useLanguage } from '../LanguageContext'
 import AboutSection from './AboutSection'
 
-const formatCapacity = value => new Intl.NumberFormat('fr-FR', {
-  maximumFractionDigits: 12,
-  useGrouping: false
-}).format(value)
-
 export default function CapacityConverter() {
+  const { language, t } = useLanguage()
   const [values, setValues] = useState({ tb: '', tib: '' })
   const [error, setError] = useState('')
   const [invalidField, setInvalidField] = useState('')
+  const formatCapacity = value => new Intl.NumberFormat(language === 'en' ? 'en-GB' : 'fr-FR', {
+    maximumFractionDigits: 12,
+    useGrouping: false
+  }).format(value)
 
   function updateValue(field, rawValue) {
     const input = rawValue.trim()
@@ -49,42 +50,41 @@ export default function CapacityConverter() {
     <>
       <section className="converter panel" aria-labelledby="converter-title">
         <div className="section-intro">
-          <span>CONVERSION DE CAPACITÉ</span>
-          <h2 id="converter-title">Convertisseur To / TiB</h2>
+          <span>{t('CONVERSION DE CAPACITÉ')}</span>
+          <h2 id="converter-title">{t('Convertisseur To / TiB')}</h2>
           <p>
-            Convertissez une capacité dans les deux sens. Modifiez l’une des valeurs pour recalculer
-            immédiatement l’autre.
+            {t('Convertissez une capacité dans les deux sens. Modifiez l’une des valeurs pour recalculer immédiatement l’autre.')}
           </p>
         </div>
         <div className="converter-grid">
           <label className="converter-field" htmlFor="capacity-tb">
-            <span>To (téraoctets décimaux)</span>
+            <span>{t('To (téraoctets décimaux)')}</span>
             <div className="input-unit">
               <input
                 id="capacity-tb"
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="Capacité To"
+                placeholder={t('Capacité To')}
                 value={values.tb}
                 onChange={event => updateValue('tb', event.target.value)}
                 aria-invalid={invalidField === 'tb'}
                 aria-describedby={invalidField === 'tb' ? 'capacity-error' : 'capacity-tb-help'}
               />
-              <em>To</em>
+              <em>{t('To')}</em>
             </div>
-            <small id="capacity-tb-help">1 To = 1 000 000 000 000 octets</small>
+            <small id="capacity-tb-help">{t('1 To = 1 000 000 000 000 octets')}</small>
           </label>
           <span className="converter-equals" aria-hidden="true">⇄</span>
           <label className="converter-field" htmlFor="capacity-tib">
-            <span>TiB (tébioctets binaires)</span>
+            <span>{t('TiB (tébioctets binaires)')}</span>
             <div className="input-unit">
               <input
                 id="capacity-tib"
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="Capacité TiB"
+                placeholder={t('Capacité TiB')}
                 value={values.tib}
                 onChange={event => updateValue('tib', event.target.value)}
                 aria-invalid={invalidField === 'tib'}
@@ -92,47 +92,46 @@ export default function CapacityConverter() {
               />
               <em>TiB</em>
             </div>
-            <small id="capacity-tib-help">1 TiB = 1 099 511 627 776 octets</small>
+            <small id="capacity-tib-help">{t('1 TiB = 1 099 511 627 776 octets')}</small>
           </label>
         </div>
-        {error && <p className="error converter-error" id="capacity-error" role="alert">{error}</p>}
+        {error && <p className="error converter-error" id="capacity-error" role="alert">{t(error)}</p>}
         <p className="converter-note">
-          La conversion distingue les unités décimales (To) des unités binaires (TiB), comme dans
-          le calculateur RAID. La virgule et le point sont acceptés comme séparateurs décimaux.
+          {t('La conversion distingue les unités décimales (To) des unités binaires (TiB), comme dans le calculateur RAID. La virgule et le point sont acceptés comme séparateurs décimaux.')}
         </p>
       </section>
       <AboutSection
         className="about-section--centered"
-        eyebrow="À PROPOS DE LA CONVERSION"
-        title="Comparez To et TiB sans ambiguïté"
-        description="Convertissez les unités décimales et binaires dans les deux sens, avec un résultat recalculé à chaque saisie."
+        eyebrow={t('À PROPOS DE LA CONVERSION')}
+        title={t('Comparez To et TiB sans ambiguïté')}
+        description={t('Convertissez les unités décimales et binaires dans les deux sens, avec un résultat recalculé à chaque saisie.')}
         items={[
           {
             icon: 'capacity',
-            label: 'Unités décimales',
-            value: 'To',
-            description: 'Base 10 : 1 To représente 1 000 000 000 000 octets.'
+            label: t('Unités décimales'),
+            value: t('To'),
+            description: t('Base 10 : 1 To représente 1 000 000 000 000 octets.')
           },
           {
             icon: 'performance',
-            label: 'Unités binaires',
+            label: t('Unités binaires'),
             value: 'TiB',
-            description: 'Base 2 : 1 TiB représente 1 099 511 627 776 octets.'
+            description: t('Base 2 : 1 TiB représente 1 099 511 627 776 octets.')
           },
           {
             icon: 'resilience',
-            label: 'Précision',
-            value: '12 décimales',
-            description: 'La conversion conserve une précision élevée sur le résultat affiché.'
+            label: t('Précision'),
+            value: t('12 décimales'),
+            description: t('La conversion conserve une précision élevée sur le résultat affiché.')
           },
           {
             icon: 'rebuild',
-            label: 'Conversion',
-            value: 'Instantanée',
-            description: 'Modifiez l’une des valeurs pour calculer immédiatement l’autre.'
+            label: t('Conversion'),
+            value: t('Instantanée'),
+            description: t('Modifiez l’une des valeurs pour calculer immédiatement l’autre.')
           }
         ]}
-        highlights={['Virgule ou point décimal', 'Conversion dans les deux sens', 'Aucune donnée envoyée']}
+        highlights={['Virgule ou point décimal', 'Conversion dans les deux sens', 'Aucune donnée envoyée'].map(text => t(text))}
       />
     </>
   )

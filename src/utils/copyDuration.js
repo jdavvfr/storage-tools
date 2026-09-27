@@ -37,18 +37,26 @@ export function calculateCopyDurationSeconds(volume, volumeUnit, throughput, thr
   return Number.isFinite(seconds) ? seconds : Number.NaN
 }
 
-export function formatCopyDuration(seconds) {
+export function formatCopyDuration(seconds, language = 'fr') {
   if (!Number.isFinite(seconds) || seconds < 0) return ''
 
   let remaining = Math.ceil(seconds)
-  const units = [
-    [31_536_000, 'an', 'ans'],
-    [86_400, 'jour', 'jours'],
-    [3_600, 'heure', 'heures'],
-    [60, 'minute', 'minutes'],
-    [1, 'seconde', 'secondes'],
-  ]
-  const formatNumber = value => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(value)
+  const units = language === 'en'
+    ? [
+        [31_536_000, 'year', 'years'],
+        [86_400, 'day', 'days'],
+        [3_600, 'hour', 'hours'],
+        [60, 'minute', 'minutes'],
+        [1, 'second', 'seconds'],
+      ]
+    : [
+        [31_536_000, 'an', 'ans'],
+        [86_400, 'jour', 'jours'],
+        [3_600, 'heure', 'heures'],
+        [60, 'minute', 'minutes'],
+        [1, 'seconde', 'secondes'],
+      ]
+  const formatNumber = value => new Intl.NumberFormat(language === 'en' ? 'en-GB' : 'fr-FR', { maximumFractionDigits: 0 }).format(value)
   const parts = []
 
   for (const [unitSeconds, singular, plural] of units) {
@@ -60,5 +68,5 @@ export function formatCopyDuration(seconds) {
     if (parts.length === 2) break
   }
 
-  return parts.join(' et ') || '1 seconde'
+  return parts.join(language === 'en' ? ' and ' : ' et ') || (language === 'en' ? '1 second' : '1 seconde')
 }

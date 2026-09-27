@@ -24,6 +24,18 @@ test('selected RAID result matches its comparison row', () => {
   assert.equal(selected.rebuild.realistic, comparisonRow.result.rebuild.realistic)
 })
 
+test('IOPS and rebuild estimates can be enabled together', () => {
+  const args = { ...comparisonArgs, raid: 'RAID5', calculateIops: true, calculateRebuild: true }
+  const result = calculateRaid(args)
+  const comparisonRow = buildRaidComparison(args).find(row => row.raid === 'RAID5')
+
+  assert.equal(result.valid, true)
+  assert.ok(result.totalIops > 0)
+  assert.ok(result.rebuild.realistic > 0)
+  assert.equal(comparisonRow.result.totalIops, result.totalIops)
+  assert.equal(comparisonRow.result.rebuild.realistic, result.rebuild.realistic)
+})
+
 test('capacity remains available when IOPS and rebuild calculations are disabled independently', () => {
   const full = calculateRaid({ ...comparisonArgs, raid: 'RAID5' })
   const capacityOnly = calculateRaid({ ...comparisonArgs, raid: 'RAID5', calculateIops: false, calculateRebuild: false })

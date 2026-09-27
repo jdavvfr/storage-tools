@@ -15,6 +15,19 @@ test('RAID50 and RAID60 grids preserve the requested group columns', () => {
   }
 })
 
+test('single-group RAID spare card spans the same width as its RAID group', () => {
+  const singleGroupConfig = getRaidGridConfig('RAID5', groups(1))
+  assert.equal(singleGroupConfig.className, 'raid-groups--single-group')
+})
+test('two- and three-group RAID spare layouts retain their group columns', () => {
+  for (const [raid, count] of [['RAID50', 2], ['RAID60', 3]]) {
+    const config = getRaidGridConfig(raid, groups(count))
+    assert.equal(config.style['--raid-columns'], count)
+    assert.equal(config.style['--raid-columns-tablet'], Math.min(count, 2))
+    assert.equal(config.style['--raid-columns-mobile'], 1)
+  }
+})
+
 test('large RAID50 and RAID60 groups reduce desktop density', () => {
   const raid50Config = getRaidGridConfig('RAID50', groups(4).map(group => ({ ...group, count: 10 })))
   const raid60Config = getRaidGridConfig('RAID60', groups(4).map(group => ({ ...group, count: 25 })))

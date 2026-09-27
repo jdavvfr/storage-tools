@@ -30,7 +30,7 @@
   gap: 14px;
 }
 
-.raid-groups--single-group > .raid-group:not(.raid-group--spares) {
+.raid-groups--single-group > .raid-group {
   grid-column: 1 / -1;
 }
 

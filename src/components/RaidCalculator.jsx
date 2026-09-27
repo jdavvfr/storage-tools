@@ -353,6 +353,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
     </>}
 
     <AboutSection
+      className={!advanced ? 'about-section--wide-heading' : ''}
       eyebrow={t('À PROPOS DU CALCULATEUR')}
       title={t(advanced ? 'Évaluer les performances d’un groupe RAID' : 'Dimensionner un groupe RAID en quelques secondes')}
       description={t(advanced

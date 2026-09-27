@@ -24,6 +24,8 @@ export default function RaidCalculator({ active = true }) {
   const [diskSizeTB, setDiskSizeTB] = useState('')
   const [groupCount, setGroupCount] = useState(2)
   const [rebuildLoad, setRebuildLoad] = useState(40)
+  const [calculateIops, setCalculateIops] = useState(false)
+  const [calculateRebuild, setCalculateRebuild] = useState(false)
   const [usePiB, setUsePiB] = useState(false)
   const [ioProfile, setIoProfile] = useState('database')
   const [readPercent, setReadPercent] = useState(ioProfiles.database.readPercent)
@@ -33,7 +35,7 @@ export default function RaidCalculator({ active = true }) {
   const disk = diskTypes[diskType]
   const definition = raidDefinitions[raid]
   const grouped = ['RAID50', 'RAID60'].includes(raid)
-  const args = { raid, diskCount, hotSpares, diskSizeTB, groupCount, disk, rebuildLoad, readPercent, accessPattern, blockSizeKiB }
+  const args = { raid, diskCount, hotSpares, diskSizeTB, groupCount, disk, rebuildLoad, readPercent, accessPattern, blockSizeKiB, calculateIops, calculateRebuild }
   const result = calculateRaid(args)
   const comparison = buildRaidComparison(args)
   const ready = raid && diskType && diskCount && diskSizeTB
@@ -61,10 +63,15 @@ export default function RaidCalculator({ active = true }) {
         <label><span>Disques actifs</span><input type="number" min="1" step="1" placeholder="Nombre de disques" value={diskCount} onChange={e => setDiskCount(e.target.value)} /></label>
         <label><span>Capacité par disque</span><div className="input-unit"><input type="number" step="1" placeholder="Capacité" value={diskSizeTB} onChange={e => setDiskSizeTB(e.target.value)} /><em>TB</em></div></label>
         <label><span>Hot spares</span><input type="number" min="0" step="1" value={hotSpares} onChange={e => setHotSpares(Number(e.target.value))} /></label>
-        <label><span>Charge pendant le rebuild</span><div className="input-unit"><input type="number" min="0" max="85" step="1" value={rebuildLoad} onChange={e => setRebuildLoad(Number(e.target.value))} /><em>%</em></div></label>
         {grouped && <label className="wide"><span>Nombre de groupes</span><input type="number" min="2" step="1" value={groupCount} onChange={e => setGroupCount(Number(e.target.value))} /><small>{diskCount && groupCount ? `${number(Number(diskCount) / groupCount, 1)} disques actifs par groupe` : ''}</small></label>}
       </div>
-      <div className="io-profile">
+      {definition && <div className="raid-info"><span>{definition.description}</span><strong>Coût d’écriture aléatoire ×{definition.writePenalty}</strong></div>}
+      <div className="advanced-options">
+        <strong>Options avancées</strong>
+        <label className="advanced-option"><input type="checkbox" checked={calculateIops} onChange={e => setCalculateIops(e.target.checked)} /><span>Calculer les IOPS selon le profil IO</span></label>
+        <label className="advanced-option"><input type="checkbox" checked={calculateRebuild} onChange={e => setCalculateRebuild(e.target.checked)} /><span>Estimer le temps de reconstruction (rebuild)</span></label>
+      </div>
+      {calculateIops && <div className="io-profile">
         <Heading n="IO" title="Profil IO" badge="Charge applicative" />
         <div className="form-grid">
           <label className="wide"><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{Object.entries(ioProfiles).map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>
@@ -75,8 +82,8 @@ export default function RaidCalculator({ active = true }) {
         </div>
         <p className="profile-recommendation"><strong>Recommandation — {selectedProfile.label} :</strong> {selectedProfile.recommendation}</p>
         <p className="profile-sum">Lecture + écriture : 100 % de la charge logique.</p>
-      </div>
-      {!ready && <div className="invitation">Sélectionnez le disque, le RAID, le nombre et la capacité des disques</div>}{definition && <div className="raid-info"><span>{definition.description}</span><strong>Coût d’écriture RAID ×{definition.writePenalty} en aléatoire</strong></div>}{result.ready && !result.valid && <div className="error">{result.message}</div>}</article>
+      </div>}
+      {!ready && <div className="invitation">Sélectionnez le disque, le RAID, le nombre et la capacité des disques</div>}{result.ready && !result.valid && <div className="error">{result.message}</div>}</article>
       <article className="panel"><Heading n="02" title="Disque sélectionné" badge={disk?.technology || 'En attente'} />{disk ? <>
         <div className="disk-title"><strong>{diskType}</strong><span>{disk.technology} · {disk.interface} · {disk.workload}</span></div>
       <div className="disk-grid">
@@ -93,9 +100,11 @@ export default function RaidCalculator({ active = true }) {
     {result.valid && <>
       <section className="panel"><Heading n="03" title="Capacité et performances" badge={<label className="pib-check"><input type="checkbox" checked={usePiB} onChange={e => setUsePiB(e.target.checked)} /> PiB</label>} /><div className="metrics">
         <Metric label="Capacité utile" value={capacity(result.usableTiB, usePiB)} detail={`(${decimal(result.usableTB, usePiB)})`} accent="cyan" />
-        <Metric label="IOPS lecture logiques" value={formatIops(result.readIops)} detail={`${number(result.readPercent)} % de la charge`} accent="purple" />
-        <Metric label="IOPS écriture logiques" value={formatIops(result.writeIops)} detail={`${number(result.writePercent)} % · coût ${number(result.ioCosts.writeReads, 1)} lectures + ${number(result.ioCosts.writeWrites, 1)} écritures physiques`} accent="purple" />
-        <Metric label="IOPS logiques totales estimées" value={formatIops(result.totalIops)} detail={`${accessPattern === 'random' ? 'Aléatoire' : 'Séquentiel'} · blocs ${blockSizeKiB} KiB`} accent="purple" />
+        {calculateIops && <>
+          <Metric label="IOPS lecture logiques" value={formatIops(result.readIops)} detail={`${number(result.readPercent)} % de la charge`} accent="purple" />
+          <Metric label="IOPS écriture logiques" value={formatIops(result.writeIops)} detail={`${number(result.writePercent)} % · coût ${number(result.ioCosts.writeReads, 1)} lectures + ${number(result.ioCosts.writeWrites, 1)} écritures physiques`} accent="purple" />
+          <Metric label="IOPS logiques totales estimées" value={formatIops(result.totalIops)} detail={`${accessPattern === 'random' ? 'Aléatoire' : 'Séquentiel'} · blocs ${blockSizeKiB} KiB`} accent="purple" />
+        </>}
         <Metric label="Résilience" value={<Stars value={result.resilience} />} detail={`${result.resilience}/5 · ${result.faultTolerance}`} accent="green" />
         <Metric label="Brut installé" value={capacity(result.installedRawTiB, usePiB)} detail={`(${decimal(result.installedRawTB, usePiB)}) · ${result.hotSpareStatus}`} />
         <Metric label="Débit lecture" value={bandwidth(result.readBandwidthMBps)} detail="Séquentiel théorique" />
@@ -105,16 +114,21 @@ export default function RaidCalculator({ active = true }) {
 
       <RaidDiagram raid={raid} diskCount={diskCount} hotSpares={hotSpares} groupCount={groupCount}/>
 
-      <section className="panel"><Heading n="05" title="Analyse de reconstruction" badge={`${result.affectedGroupSize} disques dans le domaine concerné`} /><div className="rebuild-grid">
+      {calculateRebuild && <section className="panel"><Heading n="05" title="Analyse de reconstruction" badge={`${result.affectedGroupSize} disques dans le domaine concerné`} />
+        <div className="rebuild-load"><label><span>Charge pendant le rebuild</span><div className="input-unit"><input type="number" min="0" max="85" step="1" value={rebuildLoad} onChange={e => setRebuildLoad(Number(e.target.value))} /><em>%</em></div></label></div>
+        <div className="rebuild-grid">
         <RebuildCard title="Optimiste" value={result.rebuild.optimistic} detail={result.rebuildSupported ? 'Débit nominal, aucune charge applicative' : 'Impossible : RAID 0 ne protège pas les données'} accent="green" />
         <RebuildCard title="Réaliste" value={result.rebuild.realistic} detail={result.rebuildSupported ? `Charge ${rebuildLoad} % · facteur domaine ×${number(result.rebuild.groupWorkloadFactor, 2)}` : 'Impossible : RAID 0 ne protège pas les données'} accent="orange" />
         <RebuildCard title="Dégradé" value={result.rebuild.degraded} detail={result.rebuildSupported ? '35 % de marge supplémentaire sur le temps réaliste' : 'Impossible : RAID 0 ne protège pas les données'} accent="red" />
-      </div><div className={`spare-note ${result.spares ? 'ok' : 'warning'}`}><strong>{result.hotSpareStatus}</strong><span>{result.spares ? 'La reconstruction peut démarrer automatiquement si le contrôleur est configuré pour utiliser le spare' : 'Prévoir un remplacement manuel rapide pour limiter la fenêtre sans redondance complète'}</span></div></section>
+      </div><div className={`spare-note ${result.spares ? 'ok' : 'warning'}`}><strong>{result.hotSpareStatus}</strong><span>{result.spares ? 'La reconstruction peut démarrer automatiquement si le contrôleur est configuré pour utiliser le spare' : 'Prévoir un remplacement manuel rapide pour limiter la fenêtre sans redondance complète'}</span></div></section>}
 
-      <footer><strong>Hypothèses IOPS et rebuild</strong><span>Les IOPS logiques sont limitées par les budgets physiques cumulés des disques actifs : une lecture logique consomme 1 lecture physique ; une écriture aléatoire consomme RAID 0 : 1 écriture, RAID 1/10 : 2 écritures, RAID 5/50 : 2 lectures + 2 écritures, RAID 6/60 : 3 lectures + 3 écritures (read-modify-write). Les écritures séquentielles RAID 5/6/50/60 sont supposées regroupées et alignées en bandes complètes (hypothèse optimiste) : aucune lecture préalable et un coût d’écriture égal au nombre de disques du groupe divisé par ses disques de données. Les lectures des miroirs sont supposées réparties entre leurs membres. Les références IOPS par disque sont plafonnées par le débit nominal divisé par la taille de bloc ; le profil et le ratio lecture/écriture déterminent ensuite la charge logique soutenable. C’est un modèle théorique simplifié, pas une mesure ni une donnée constructeur garantie : il ignore cache, contrôleur, files, granularité réelle des E/S et limites de bus. Les recommandations sont des points de départ à ajuster avec les traces de l’application.
-        Pour la reconstruction, temps nominal = capacité / débit retenu ; le scénario réaliste applique la charge saisie et ajoute 8 % (RAID 5/50) ou 12 % (RAID 6/60) de contention par membre du domaine au-delà de 2. Le scénario dégradé ajoute 35 % au temps réaliste. RAID 0 ne peut pas reconstruire un disque. Ces facteurs ne sont pas des garanties : contrôleur, firmware, priorité, erreurs de lecture et E/S réelles peuvent fortement modifier les durées.</span></footer>
+      {(calculateIops || calculateRebuild) && <footer><strong>Hypothèses {calculateIops && calculateRebuild ? 'IOPS et rebuild' : calculateIops ? 'IOPS' : 'rebuild'}</strong><span>
+        {calculateIops && <>Les IOPS logiques sont limitées par les budgets physiques cumulés des disques actifs : une lecture logique consomme 1 lecture physique ; une écriture aléatoire consomme RAID 0 : 1 écriture, RAID 1/10 : 2 écritures, RAID 5/50 : 2 lectures + 2 écritures, RAID 6/60 : 3 lectures + 3 écritures (read-modify-write). Les écritures séquentielles RAID 5/6/50/60 sont supposées regroupées et alignées en bandes complètes (hypothèse optimiste) : aucune lecture préalable et un coût d’écriture égal au nombre de disques du groupe divisé par ses disques de données. Les lectures des miroirs sont supposées réparties entre leurs membres. Les références IOPS par disque sont plafonnées par le débit nominal divisé par la taille de bloc ; le profil et le ratio lecture/écriture déterminent ensuite la charge logique soutenable. C’est un modèle théorique simplifié, pas une mesure ni une donnée constructeur garantie : il ignore cache, contrôleur, files, granularité réelle des E/S et limites de bus. Les recommandations sont des points de départ à ajuster avec les traces de l’application.</>}
+        {calculateIops && calculateRebuild && ' '}
+        {calculateRebuild && <>Pour la reconstruction, temps nominal = capacité / débit retenu ; le scénario réaliste applique la charge saisie et ajoute 8 % (RAID 5/50) ou 12 % (RAID 6/60) de contention par membre du domaine au-delà de 2. Le scénario dégradé ajoute 35 % au temps réaliste. RAID 0 ne peut pas reconstruire un disque. Ces facteurs ne sont pas des garanties : contrôleur, firmware, priorité, erreurs de lecture et E/S réelles peuvent fortement modifier les durées.</>}
+      </span></footer>}
 
-      <section className="panel"><Heading n="06" title="Comparaison RAID" badge={`${readPercent} % lecture · ${100 - readPercent} % écriture`} /><div className="table-wrap"><table><thead><tr><th>RAID</th><th>Capacité utile</th><th>Rendement installé</th><th>IOPS lecture estimées</th><th>IOPS écriture estimées</th><th>Débit écriture</th><th>Rebuild réaliste</th><th>Résilience</th></tr></thead><tbody>{comparison.filter(x => x.result.valid).map(x => <tr key={x.raid} className={x.raid === raid ? 'selected' : ''}><td><b>{x.definition.label}</b></td><td>{capacity(x.result.usableTiB, usePiB)}<small>({decimal(x.result.usableTB, usePiB)})</small></td><td>{number(x.result.efficiencyInstalled, 1)} %</td><td>{formatIops(x.result.readIops)}</td><td>{formatIops(x.result.writeIops)}</td><td>{bandwidth(x.result.writeBandwidthMBps)}</td><td>{x.result.rebuild.realistic === null ? 'Non disponible' : duration(x.result.rebuild.realistic)}</td><td><Stars value={x.result.resilience} /></td></tr>)}</tbody></table></div><p className="profile-sum">Les IOPS de ce tableau utilisent le profil sélectionné, le bloc de {blockSizeKiB} KiB et les coûts physiques propres à chaque niveau RAID.</p></section>
+      <section className="panel"><Heading n="06" title="Comparaison RAID" badge={calculateIops ? `${readPercent} % lecture · ${100 - readPercent} % écriture` : 'Capacité'} /><div className="table-wrap"><table><thead><tr><th>RAID</th><th>Capacité utile</th><th>Rendement installé</th>{calculateIops && <><th>IOPS lecture estimées</th><th>IOPS écriture estimées</th></>}<th>Débit écriture</th>{calculateRebuild && <th>Rebuild réaliste</th>}<th>Résilience</th></tr></thead><tbody>{comparison.filter(x => x.result.valid).map(x => <tr key={x.raid} className={x.raid === raid ? 'selected' : ''}><td><b>{x.definition.label}</b></td><td>{capacity(x.result.usableTiB, usePiB)}<small>({decimal(x.result.usableTB, usePiB)})</small></td><td>{number(x.result.efficiencyInstalled, 1)} %</td>{calculateIops && <><td>{formatIops(x.result.readIops)}</td><td>{formatIops(x.result.writeIops)}</td></>}<td>{bandwidth(x.result.writeBandwidthMBps)}</td>{calculateRebuild && <td>{x.result.rebuild.realistic === null ? 'Non disponible' : duration(x.result.rebuild.realistic)}</td>}<td><Stars value={x.result.resilience} /></td></tr>)}</tbody></table></div>{calculateIops && <p className="profile-sum">Les IOPS de ce tableau utilisent le profil sélectionné, le bloc de {blockSizeKiB} KiB et les coûts physiques propres à chaque niveau RAID.</p>}</section>
     </>}
 
     <AboutSection

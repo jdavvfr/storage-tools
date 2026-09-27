@@ -24,6 +24,42 @@ test('selected RAID result matches its comparison row', () => {
   assert.equal(selected.rebuild.realistic, comparisonRow.result.rebuild.realistic)
 })
 
+test('capacity remains available when IOPS and rebuild calculations are disabled independently', () => {
+  const full = calculateRaid({ ...comparisonArgs, raid: 'RAID5' })
+  const capacityOnly = calculateRaid({ ...comparisonArgs, raid: 'RAID5', calculateIops: false, calculateRebuild: false })
+  const withIopsOnly = calculateRaid({ ...comparisonArgs, raid: 'RAID5', calculateIops: true, calculateRebuild: false })
+  const withRebuildOnly = calculateRaid({ ...comparisonArgs, raid: 'RAID5', calculateIops: false, calculateRebuild: true })
+
+  for (const result of [capacityOnly, withIopsOnly, withRebuildOnly]) {
+    assert.equal(result.valid, true)
+    assert.equal(result.usableTB, full.usableTB)
+    assert.equal(result.usableTiB, full.usableTiB)
+    assert.equal(result.installedRawTB, full.installedRawTB)
+  }
+  assert.equal(capacityOnly.totalIops, null)
+  assert.equal(capacityOnly.ioCosts, null)
+  assert.equal(capacityOnly.rebuild.realistic, null)
+  assert.equal(withIopsOnly.totalIops, full.totalIops)
+  assert.equal(withIopsOnly.rebuild.realistic, null)
+  assert.equal(withRebuildOnly.totalIops, null)
+  assert.equal(withRebuildOnly.rebuild.realistic, full.rebuild.realistic)
+})
+
+test('IOPS-specific input validation is skipped when IOPS estimates are disabled', () => {
+  const result = calculateRaid({
+    ...comparisonArgs,
+    raid: 'RAID5',
+    readPercent: 150,
+    accessPattern: 'unsupported',
+    blockSizeKiB: 0,
+    calculateIops: false,
+    calculateRebuild: false
+  })
+
+  assert.equal(result.valid, true)
+  assert.equal(result.usableTB, 70)
+})
+
 test('mixed-workload logical IOPS account for each RAID write penalty', () => {
   const comparison = buildRaidComparison({ ...comparisonArgs, readPercent: 70, blockSizeKiB: 4 })
     .filter(row => row.result.valid)
@@ -82,6 +118,9 @@ test('usage profiles provide valid ratios, access patterns, and block recommenda
   }
 
   assert.equal(ioProfiles.database.accessPattern, 'random')
+  assert.equal(ioProfiles.virtualization.accessPattern, 'random')
+  assert.equal(ioProfiles.virtualization.blockSizeKiB, 8)
+  assert.equal(ioProfiles.virtualization.readPercent, 70)
   assert.equal(ioProfiles.files.blockSizeKiB, 64)
   assert.equal(ioProfiles.backup.accessPattern, 'sequential')
   assert.equal(ioProfiles.backup.readPercent, 0)

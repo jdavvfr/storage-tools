@@ -583,8 +583,6 @@ input[aria-invalid="true"] {
 
 .raid-comparison__resilience--worse {
   color: #fecaca;
-  background: #7f1d1d;
-  box-shadow: inset 0 0 0 1px #f87171;
 }
 
 .raid-comparison__resilience--worse .stars i.on {
@@ -594,8 +592,6 @@ input[aria-invalid="true"] {
 
 .raid-comparison__resilience--better {
   color: #bbf7d0;
-  background: #14532d;
-  box-shadow: inset 0 0 0 1px #4ade80;
 }
 
 .raid-comparison__resilience--better .stars i.on {

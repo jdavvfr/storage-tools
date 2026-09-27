@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildRaidComparison, calculateRaid, ioProfiles, raidDefinitions } from './raidCalculations.js'
+import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, ioProfiles, raidDefinitions } from './raidCalculations.js'
 
 const disk = { rebuildMBps: 200, readIops: 100, writeIops: 100, readBandwidthMBps: 200, writeBandwidthMBps: 200 }
 const comparisonArgs = { diskCount: 8, hotSpares: 0, diskSizeTB: 10, groupCount: 2, disk, rebuildLoad: 40 }
@@ -36,7 +36,7 @@ test('IOPS and rebuild estimates can be enabled together', () => {
   assert.equal(comparisonRow.result.rebuild.realistic, result.rebuild.realistic)
 })
 
-test('custom disk performance drives IOPS, bandwidth, and comparison without changing nominal rebuild', () => {
+test('custom disk performance drives IOPS, bandwidth, comparison, and nominal rebuild', () => {
   const customizedDisk = {
     ...disk,
     readIops: 50,
@@ -44,7 +44,11 @@ test('custom disk performance drives IOPS, bandwidth, and comparison without cha
     readBandwidthMBps: 300,
     writeBandwidthMBps: 400
   }
-  const args = { ...comparisonArgs, disk: customizedDisk, raid: 'RAID5' }
+  const calculationDisk = {
+    ...customizedDisk,
+    rebuildMBps: calculateNominalRebuildBandwidth(disk, customizedDisk)
+  }
+  const args = { ...comparisonArgs, disk: calculationDisk, raid: 'RAID5' }
   const result = calculateRaid(args)
   const comparisonRow = buildRaidComparison(args).find(row => row.raid === 'RAID5')
   const referenceResult = calculateRaid({ ...args, disk })
@@ -57,7 +61,9 @@ test('custom disk performance drives IOPS, bandwidth, and comparison without cha
   assert.notEqual(result.totalIops, referenceResult.totalIops)
   assert.equal(comparisonRow.result.totalIops, result.totalIops)
   assert.equal(comparisonRow.result.readBandwidthMBps, result.readBandwidthMBps)
-  assert.equal(result.rebuild.optimistic, referenceResult.rebuild.optimistic)
+  assert.equal(calculationDisk.rebuildMBps, 300)
+  assert.equal(result.rebuild.optimistic, referenceResult.rebuild.optimistic / 1.5)
+  assert.equal(comparisonRow.result.rebuild.optimistic, result.rebuild.optimistic)
 })
 
 test('invalid disk performance values are rejected before estimates are calculated', () => {

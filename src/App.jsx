@@ -25,7 +25,7 @@ function App() {
 
   return <main className="shell">
     <div className="language-bar">
-      <span>{language === 'fr' ? '🇫🇷' : '🇬🇧'}</span>
+      {language === 'fr' && <span aria-hidden="true">🇫🇷</span>}
       <span className="visually-hidden" id="language-label">{language === 'fr' ? 'Langue : français' : 'Language: English'}</span>
       <button
         type="button"

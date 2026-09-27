@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { diskTypes } from '../data/disks'
 import { buildRaidComparison, calculateRaid, raidDefinitions, tbToPB, tiBToPiB } from '../utils/raidCalculations'
+import { formatIops } from '../utils/formatIops'
 import AboutSection from './AboutSection'
 import { RaidDiagram } from './RaidEnhancements'
 
 const number = (v, d = 0) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: d }).format(v || 0)
-const iops = v => v >= 1e6 ? `${number(v / 1e6, 2)} M` : v >= 1e3 ? `${number(v / 1e3, 1)} k` : number(v)
 const bandwidth = v => v >= 1e3 ? `${number(v / 1e3, 2)} Go/s` : `${number(v)} Mo/s`
 const capacity = (tib, pib) => pib ? `${number(tiBToPiB(tib), 3)} PiB` : `${number(tib, 2)} TiB`
 const decimal = (tb, pib) => pib ? `${number(tbToPB(tb), 3)} PB` : `${number(tb, 2)} TB`
@@ -48,8 +48,8 @@ export default function RaidCalculator({ active = true }) {
       <article className="panel"><Heading n="02" title="Disque sélectionné" badge={disk?.technology || 'En attente'} />{disk ? <>
         <div className="disk-title"><strong>{diskType}</strong><span>{disk.technology} · {disk.interface} · {disk.workload}</span></div>
       <div className="disk-grid">
-        <div><span>IOPS lecture</span><strong>{iops(disk.readIops)}</strong></div>
-        <div><span>IOPS écriture</span><strong>{iops(disk.writeIops)}</strong></div>
+        <div><span>IOPS lecture</span><strong>{formatIops(disk.readIops)}</strong></div>
+        <div><span>IOPS écriture</span><strong>{formatIops(disk.writeIops)}</strong></div>
         <div><span>Débit lecture</span><strong>{bandwidth(disk.readBandwidthMBps)}</strong></div>
         <div><span>Débit écriture</span><strong>{bandwidth(disk.writeBandwidthMBps)}</strong></div>
         <div><span>Débit rebuild retenu</span><strong>{bandwidth(disk.rebuildMBps)}</strong></div>
@@ -60,8 +60,8 @@ export default function RaidCalculator({ active = true }) {
     {result.valid && <>
       <section className="panel"><Heading n="03" title="Capacité et performances" badge={<label className="pib-check"><input type="checkbox" checked={usePiB} onChange={e => setUsePiB(e.target.checked)} /> PiB</label>} /><div className="metrics">
         <Metric label="Capacité utile" value={capacity(result.usableTiB, usePiB)} detail={`(${decimal(result.usableTB, usePiB)})`} accent="cyan" />
-        <Metric label="IOPS lecture" value={iops(result.readIops)} accent="purple" />
-        <Metric label="IOPS écriture" value={iops(result.writeIops)} detail={`Pénalité ×${result.writePenalty}`} accent="purple" />
+        <Metric label="IOPS lecture" value={formatIops(result.readIops)} accent="purple" />
+        <Metric label="IOPS écriture" value={formatIops(result.writeIops)} detail={`Pénalité ×${result.writePenalty}`} accent="purple" />
         <Metric label="Résilience" value={<Stars value={result.resilience} />} detail={`${result.resilience}/5 · ${result.faultTolerance}`} accent="green" />
         <Metric label="Brut installé" value={capacity(result.installedRawTiB, usePiB)} detail={`(${decimal(result.installedRawTB, usePiB)}) · ${result.hotSpareStatus}`} />
         <Metric label="Débit lecture" value={bandwidth(result.readBandwidthMBps)} detail="Séquentiel théorique" />

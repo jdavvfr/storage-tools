@@ -102,6 +102,10 @@ body {
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
 }
 
+.raid-layout--advanced {
+  margin-bottom: 8px;
+}
+
 .raid-parameter-grid > .panel,
 .raid-disk-panel {
   margin-bottom: 0;
@@ -430,6 +434,13 @@ input[aria-invalid="true"] {
   box-shadow: 0 0 8px #2dd4bf55;
 }
 
+.metric--resilience > strong {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.25rem;
+}
+
 .rebuild-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -521,6 +532,34 @@ input[aria-invalid="true"] {
   overflow-x: auto;
   border: 1px solid #213957;
   border-radius: 16px;
+}
+
+.raid-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.raid-sort-button:hover {
+  color: #c3d1e2;
+}
+
+.raid-sort-button:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid #38bdf8;
+  outline-offset: 4px;
+}
+
+.raid-sort-button span {
+  color: #5eead4;
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .raid-comparison__row {

@@ -2,11 +2,10 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { useLanguage } from '../LanguageContext'
 import './ToolInfoPopover.css'
 
-export default function ToolInfoPopover({ eyebrow, title, description }) {
+export default function ToolInfoPopover({ name, sections }) {
   const { t } = useLanguage()
   const popoverId = `tool-info-${useId()}`
   const titleId = `${popoverId}-title`
-  const descriptionId = `${popoverId}-description`
   const containerRef = useRef(null)
   const [hovered, setHovered] = useState(false)
   const [focused, setFocused] = useState(false)
@@ -55,7 +54,6 @@ export default function ToolInfoPopover({ eyebrow, title, description }) {
         aria-label={t('Informations sur cet outil')}
         aria-expanded={isVisible}
         aria-controls={popoverId}
-        aria-describedby={descriptionId}
         onFocus={() => {
           setFocused(true)
           setDismissed(false)
@@ -80,9 +78,21 @@ export default function ToolInfoPopover({ eyebrow, title, description }) {
         aria-labelledby={titleId}
         hidden={!isVisible}
       >
-        <span className="tool-info__eyebrow">{eyebrow}</span>
-        <h2 id={titleId}>{title}</h2>
-        <p id={descriptionId}>{description}</p>
+        <span className="tool-info__eyebrow">{t(name)}</span>
+        <h2 id={titleId}>{t('Infos sur l’outil')}</h2>
+        <div className="tool-info__sections">
+          {sections.map(section => (
+            <section key={section.title} aria-labelledby={`${popoverId}-${section.title}`}>
+              <h3 id={`${popoverId}-${section.title}`}>{t(section.title)}</h3>
+              {section.items.map(item => (
+                <article key={item.title}>
+                  <h4>{t(item.title)}</h4>
+                  <p>{t(item.text)}</p>
+                </article>
+              ))}
+            </section>
+          ))}
+        </div>
       </section>
     </div>
   )

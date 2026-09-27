@@ -124,13 +124,18 @@ export function calculateRaid({
   const installedRawTB = installed * sizeTB
   const usableTB = usableDisks * sizeTB
   const affectedGroupSize = ['RAID50', 'RAID60'].includes(raid) ? active / groups : ['RAID1', 'RAID10'].includes(raid) ? 2 : active
-  let rebuild = { optimistic: null, realistic: null, degraded: null, groupWorkloadFactor: null }
+  
+  let rebuild = {   optimistic: null,  realistic: null,  degraded: null,  applicationLoadFactor: null,  domainContentionFactor: null,  combinedFactor: null}
   if (calculateRebuild && definition.rebuildSupported) {
     const baseHours = sizeTB * 1_000_000 / disk.rebuildMBps / 3600
-    const groupWorkloadFactor = 1 + Math.max(0, affectedGroupSize - 2) * definition.rebuildContentionPerAdditionalDisk
-    const realisticHours = baseHours / Math.max(0.15, 1 - Number(rebuildLoad) / 100) * groupWorkloadFactor
-    rebuild = { optimistic: baseHours, realistic: realisticHours, degraded: realisticHours / 0.65, groupWorkloadFactor }
+    const availableRebuildRatio = Math.max(0.15, 1 - Number(rebuildLoad) / 100)
+    const applicationLoadFactor = 1 / availableRebuildRatio
+    const domainContentionFactor =  1 + Math.max(0, affectedGroupSize - 2) * definition.rebuildContentionPerAdditionalDisk
+    const combinedFactor = applicationLoadFactor * domainContentionFactor
+    const realisticHours = baseHours * combinedFactor
+    rebuild = {optimistic: baseHours, realistic: realisticHours, degraded: realisticHours / 0.65,  applicationLoadFactor, domainContentionFactor, combinedFactor}
   }
+  
   const ioCosts = calculateIops ? getIoCosts(raid, active, groups, accessPattern) : null
   const diskReadIops = calculateIops ? Math.min(disk.readIops, disk.readBandwidthMBps * 1_000_000 / (blockSize * 1024)) : null
   const diskWriteIops = calculateIops ? Math.min(disk.writeIops, disk.writeBandwidthMBps * 1_000_000 / (blockSize * 1024)) : null

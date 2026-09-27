@@ -143,6 +143,23 @@ test('usage profiles provide valid ratios, access patterns, and block recommenda
   assert.equal(ioProfiles.backup.readPercent, 0)
 })
 
+test('selected usage profiles drive RAID IOPS estimates from their workload settings', () => {
+  const highIopsDisk = { ...disk, readIops: 10000, writeIops: 10000 }
+  const resultForProfile = profile => calculateRaid({
+    ...comparisonArgs,
+    disk: highIopsDisk,
+    raid: 'RAID5',
+    ...profile
+  })
+  const database = resultForProfile(ioProfiles.database)
+  const backup = resultForProfile(ioProfiles.backup)
+  const files = resultForProfile(ioProfiles.files)
+
+  assert.notEqual(database.totalIops, backup.totalIops)
+  assert.notEqual(database.ioCosts.writeReads, backup.ioCosts.writeReads)
+  assert.notEqual(database.effectiveDiskReadIops, files.effectiveDiskReadIops)
+})
+
 test('invalid workload ratios and block sizes are rejected', () => {
   assert.match(calculateRaid({ ...comparisonArgs, raid: 'RAID5', readPercent: 101 }).message, /entre 0 et 100 %/)
   assert.match(calculateRaid({ ...comparisonArgs, raid: 'RAID5', blockSizeKiB: 0 }).message, /taille de bloc/)

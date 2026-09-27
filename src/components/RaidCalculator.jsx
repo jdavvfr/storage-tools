@@ -11,9 +11,9 @@ const capacity = (tib, pib) => pib ? `${number(tiBToPiB(tib), 3)} PiB` : `${numb
 const decimal = (tb, pib) => pib ? `${number(tbToPB(tb), 3)} PB` : `${number(tb, 2)} TB`
 const duration = h => h >= 48 ? `${number(h / 24, 1)} jours` : `${number(h, 1)} h`
 const comparisonSortOptions = [
-  { key: 'efficiencyInstalled', label: 'Rendement installé' },
-  { key: 'readBandwidthMBps', label: 'Débit lecture' },
-  { key: 'readIops', label: 'IOPS lecture' }
+  { key: 'efficiencyInstalled', label: 'RENDEMENT INSTALLÉ' },
+  { key: 'readBandwidthMBps', label: 'DÉBIT LECTURE' },
+  { key: 'readIops', label: 'IOPS LECTURE' }
 ]
 
 function Heading({ n, title, badge }) { return <div className="heading"><div><span>{n}</span><h2>{title}</h2></div><b>{badge}</b></div> }
@@ -107,6 +107,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
           <label><span>Disques actifs</span><input type="number" min="1" step="1" placeholder="Nombre de disques" value={diskCount} onChange={e => updateParameter(setDiskCount, e.target.value)} /></label>
           <label><span>Capacité par disque</span><div className="input-unit"><input type="number" step="1" placeholder="Capacité" value={diskSizeTB} onChange={e => updateParameter(setDiskSizeTB, e.target.value)} /><em>TB</em></div></label>
           <label><span>Hot spares</span><input type="number" min="0" step="1" value={hotSpares} onChange={e => updateParameter(setHotSpares, Number(e.target.value))} /></label>
+          {!advanced && <label><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{Object.entries(ioProfiles).map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>}
           {advanced && <label><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{Object.entries(ioProfiles).map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>}
           {grouped && <label className="wide"><span>Nombre de groupes</span><input type="number" min="2" step="1" value={groupCount} onChange={e => updateParameter(setGroupCount, Number(e.target.value))} /><small>{diskCount && groupCount ? `${number(Number(diskCount) / groupCount, 1)} disques actifs par groupe` : ''}</small></label>}
         </div>
@@ -157,9 +158,10 @@ export default function RaidCalculator({ active = true, advanced = false }) {
           <Metric label="Débit écriture agrégé" value={bandwidth(result.writeBandwidthMBps)} detail={`${number(result.usableDisks)} disques de données`} accent="cyan" />
           <Metric label="Capacité brute" value={capacity(result.installedRawTiB, usePiB)} detail={`${decimal(result.installedRawTB, usePiB)} installés, hot spares inclus`} accent="purple" />
           <Metric label="Résilience" value={<><Stars value={result.resilience} /><span>{number(result.resilience)} / 5</span></>} detail={result.faultTolerance} accent="green" className="metric--resilience" />
-          <Metric label="IOPS lecture agrégés" value={formatIops(result.readIops)} detail="Base de données · 70 % lecture · aléatoire · 8 KiB" accent="cyan" />
-          <Metric label="IOPS écriture agrégés" value={formatIops(result.writeIops)} detail="Base de données · 70 % lecture · aléatoire · 8 KiB" accent="purple" />
+          <Metric label="IOPS lecture agrégés" value={formatIops(result.readIops)} detail={`${selectedProfile.label} · ${readPercent} % lecture · ${accessPattern === 'random' ? 'aléatoire' : 'séquentiel'} · ${blockSizeKiB} KiB`} accent="cyan" />
+          <Metric label="IOPS écriture agrégés" value={formatIops(result.writeIops)} detail={`${selectedProfile.label} · ${readPercent} % lecture · ${accessPattern === 'random' ? 'aléatoire' : 'séquentiel'} · ${blockSizeKiB} KiB`} accent="purple" />
         </div>
+        <p className="profile-recommendation"><strong>Recommandation — {selectedProfile.label} :</strong> {selectedProfile.recommendation}</p>
       </section>
       <RaidDiagram raid={raid} diskCount={diskCount} hotSpares={hotSpares} groupCount={groupCount} sectionNumber="04" />
     </>}
@@ -169,7 +171,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
         <p className="profile-sum">Sélectionnez une ligne (Entrée ou Espace au clavier) pour afficher ce niveau RAID dans l’organisation et l’analyse de reconstruction.</p>
         <div className="table-wrap">
           <table aria-label="Comparaison RAID">
-            <thead><tr><th>RAID</th><th>Capacité utile</th>{comparisonSortOptions.map(({ key, label }) => {
+            <thead><tr><th>RAID</th><th>CAPACITÉ UTILE</th>{comparisonSortOptions.map(({ key, label }) => {
               const isSorted = comparisonSort?.key === key
               const direction = isSorted ? comparisonSort.direction : null
               const nextDirection = direction === 'ascending' ? 'décroissant' : 'croissant'
@@ -187,7 +189,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
                   {label}<span aria-hidden="true">{direction === 'ascending' ? '↑' : direction === 'descending' ? '↓' : '↕'}</span>
                 </button>
               </th>
-            })}<th>Débit écriture</th><th>IOPS écriture</th><th>Rebuild réaliste</th><th>Résilience</th></tr></thead>
+            })}<th>DÉBIT ÉCRITURE</th><th>IOPS ÉCRITURE</th><th>REBUILD RÉALISTE</th><th>RÉSILIENCE</th></tr></thead>
             <tbody>{sortedComparison.map(x => {
               const isSelected = x.raid === selectedComparisonRaid
               const selectRow = () => setManualSelection({ parameterRevision, raid: x.raid })
@@ -234,7 +236,10 @@ export default function RaidCalculator({ active = true, advanced = false }) {
                     {!isSelected && <ComparisonIndicator value={x.result.rebuild.realistic} selectedValue={selectedResult.rebuild.realistic} lowerIsBetter metric="Durée de rebuild" />}
                   </>}
                 </td>
-                <td><Stars value={x.result.resilience} /></td>
+                <td className={`raid-comparison__resilience raid-comparison__resilience--${x.result.resilience < selectedResult.resilience ? 'worse' : x.result.resilience > selectedResult.resilience ? 'better' : 'equal'}`}>
+                  {x.result.resilience !== selectedResult.resilience && <span className="visually-hidden">Résilience {x.result.resilience < selectedResult.resilience ? 'inférieure' : 'supérieure'} à la ligne sélectionnée. </span>}
+                  <Stars value={x.result.resilience} />
+                </td>
               </tr>
             })}</tbody>
           </table>

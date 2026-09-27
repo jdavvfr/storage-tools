@@ -4,8 +4,8 @@ Free online storage tools for capacity planning.
 
 ## Available tools
 
-- RAID Calculator: usable capacity, hot spare sizing, rebuild estimates, storage efficiency, and RAID-level comparisons with read/write throughput.
-- RAID Calculator Advanced: all RAID Calculator features, plus an IO profile, estimated read/write IOPS, and rebuild load controls and scenarios.
+- RAID Calculator Basic: usable capacity, hot spare sizing, rebuild estimates, storage efficiency, RAID-level comparisons with read/write throughput, and profile-based IOPS estimates.
+- RAID Calculator Advanced: all RAID Calculator Basic features, plus editable IO profile settings, and rebuild load controls and scenarios.
 - To / TiB converter: bidirectional conversion between decimal terabytes (To) and binary tebibytes (TiB). It accepts a comma or point as the decimal separator.
 - Copy duration estimator: estimates transfer time from a data volume and throughput, with decimal and binary byte units as well as decimal bit rates.
 - Volume growth calculator: projects a source volume over a whole number of years using a compound annual growth rate, and displays the target in the source unit.
@@ -22,9 +22,9 @@ Tape LTO capacity estimates use native capacities of 6 To (LTO-7), 12 To (LTO-8)
 
 Rebuild durations are per-disk estimates shown by RAID Calculator. The optimistic duration is disk capacity divided by the selected disk's nominal rebuild throughput. The realistic duration applies the configured workload percentage, then a domain-contention factor: 0% per member beyond two for RAID 1/10, 8% for each additional member in a RAID 5/50 recovery domain, and 12% for each additional member in RAID 6/60. For RAID 50/60, the recovery domain is one RAID group. The degraded estimate adds 35% to the realistic duration. These are explicit scenario assumptions, not hardware guarantees; controller behavior, rebuild priorities, workload, and read errors can substantially change actual times. RAID 0 has no redundancy, so a failed disk cannot be rebuilt.
 
-## RAID IOPS estimate assumptions (RAID Calculator Advanced)
+## RAID IOPS estimate assumptions (both RAID calculators)
 
-RAID Calculator Advanced offers Sauvegarde, Virtualisation, Fichier, Base de données, and Personnalisé IO profiles. Profiles set an initial read/write ratio, access pattern, and block size; the read and write percentages always total 100% and can be adjusted. Recommendations are generic starting points, not workload measurements.
+Both RAID calculators offer Sauvegarde, Virtualisation, Fichier, Base de données, and Personnalisé IO profiles. Profiles set the read/write ratio, access pattern, and block size used by the IOPS estimate. Basic applies the selected profile directly; Advanced also lets you adjust those settings. Recommendations are generic starting points, not workload measurements.
 
 Logical IOPS are estimated from the active disks' combined physical read and write budgets. Each logical read costs one physical read. For random writes, the assumed physical cost is one write for RAID 0, two writes for RAID 1/10, two reads plus two writes for RAID 5/50, and three reads plus three writes for RAID 6/60. Sequential RAID 5/6/50/60 writes optimistically assume the controller can coalesce and align them into full stripes, with no preread and a physical write cost equal to group members divided by data members. Reads from mirrors are assumed to balance across members. The result is the workload mix's maximum logical IOPS under those budgets, split according to the configured ratio.
 

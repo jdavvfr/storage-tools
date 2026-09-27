@@ -11,7 +11,7 @@ function App() {
 
   return <main className="shell">
     <nav className="tool-navigation" aria-label="Outils de stockage">
-      <button type="button" className={activeTool === 'raid' ? 'active' : ''} aria-current={activeTool === 'raid' ? 'page' : undefined} onClick={() => setActiveTool('raid')}>RAID Calculator</button>
+      <button type="button" className={activeTool === 'raid' ? 'active' : ''} aria-current={activeTool === 'raid' ? 'page' : undefined} onClick={() => setActiveTool('raid')}>RAID Calculator Basic</button>
       <button type="button" className={activeTool === 'raid-advanced' ? 'active' : ''} aria-current={activeTool === 'raid-advanced' ? 'page' : undefined} onClick={() => setActiveTool('raid-advanced')}>RAID Calculator Advanced</button>
       <button type="button" className={activeTool === 'converter' ? 'active' : ''} aria-current={activeTool === 'converter' ? 'page' : undefined} onClick={() => setActiveTool('converter')}>Convertisseur To / TiB</button>
       <button type="button" className={activeTool === 'copy' ? 'active' : ''} aria-current={activeTool === 'copy' ? 'page' : undefined} onClick={() => setActiveTool('copy')}>Durée de copie</button>

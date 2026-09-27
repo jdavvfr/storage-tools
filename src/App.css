@@ -695,10 +695,6 @@ input[aria-invalid="true"] {
   line-height: 1.6;
 }
 
-.growth-calculator-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
 .growth-calculator-input--single {
   grid-template-columns: minmax(0, 1fr);
   position: relative;

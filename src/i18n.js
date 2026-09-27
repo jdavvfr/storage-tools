@@ -9,6 +9,8 @@ export const translations = {
     'Croissance volumétrique': 'Volume Growth',
     'Tape LTO': 'LTO Tape',
     'RAID Calculator': 'RAID Calculator',
+    'À PROPOS DE STORAGE TOOLS': 'ABOUT STORAGE TOOLS',
+    'Réunir ces outils au même endroit simplifie les tâches quotidiennes de stockage et permet d’obtenir rapidement des estimations cohérentes.': 'Bringing these tools together simplifies everyday storage tasks and helps you get consistent estimates quickly.',
     'Convertisseur To / TiB': 'TB / TiB Converter',
     'Outils Tape LTO': 'LTO Tape Tools',
     'Dimensionnement RAID avec capacité, performances et organisation': 'RAID sizing with capacity, performance, and layout',

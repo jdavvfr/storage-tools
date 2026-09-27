@@ -31,6 +31,14 @@ test('uses English terms for French main navigation and page titles', () => {
   assert.equal(translate('Outils Tape LTO', 'fr'), 'LTO Tape Tools')
 })
 
+test('translates the general Storage Tools about section into English', () => {
+  assert.equal(translate('À PROPOS DE STORAGE TOOLS', 'en'), 'ABOUT STORAGE TOOLS')
+  assert.equal(
+    translate('Réunir ces outils au même endroit simplifie les tâches quotidiennes de stockage et permet d’obtenir rapidement des estimations cohérentes.', 'en'),
+    'Bringing these tools together simplifies everyday storage tasks and helps you get consistent estimates quickly.'
+  )
+})
+
 test('preserves English labels and leaves unknown strings unchanged', () => {
   assert.equal(translate('Outils de stockage', 'en'), 'Storage tools')
   assert.equal(translate('RAID Calculator Basic', 'en'), 'RAID Calculator Basic')

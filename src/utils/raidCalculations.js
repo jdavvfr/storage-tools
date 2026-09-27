@@ -10,6 +10,8 @@ export function calculateNominalRebuildBandwidth(referenceDisk, performanceDisk)
   return referenceDisk.rebuildMBps * Math.min(readScale, writeScale)
 }
 
+export const DEFAULT_IO_PROFILE = 'virtualization'
+
 export const ioProfiles = {
   backup: {
     label: 'Sauvegarde',
@@ -26,18 +28,18 @@ export const ioProfiles = {
     recommendation: 'Point de départ pour un datastore de machines virtuelles : charge aléatoire mixte, blocs de 8 KiB et majorité de lectures. Les profils des VM et du datastore peuvent varier ; ajustez avec des mesures réelles.'
   },
   files: {
-    label: 'Fichier',
+    label: 'Fichiers NAS',
     readPercent: 70,
     accessPattern: 'random',
     blockSizeKiB: 64,
     recommendation: 'Point de départ pour un serveur de fichiers : charge mixte et blocs de 64 KiB. Les petits fichiers et les accès séquentiels peuvent changer fortement ce profil.'
   },
-  database: {
-    label: 'Base de données',
-    readPercent: 70,
-    accessPattern: 'random',
-    blockSizeKiB: 8,
-    recommendation: 'Point de départ transactionnel : E/S aléatoires, blocs de 8 KiB et majorité de lectures. Ajustez selon les métriques réelles de la base.'
+  surveillance: {
+    label: 'Vidéosurveillance',
+    readPercent: 10,
+    accessPattern: 'sequential',
+    blockSizeKiB: 256,
+    recommendation: 'Point de départ pour un stockage CCTV dominé par l’enregistrement continu : 90 % d’écritures et 10 % de lectures de consultation, en séquentiel avec des blocs de 256 KiB. Ajustez le ratio selon la fréquence de relecture et les mesures du NVR.'
   },
   custom: {
     label: 'Personnalisé',
@@ -47,6 +49,9 @@ export const ioProfiles = {
     recommendation: 'Définissez un profil représentatif de votre application ou utilisez des mesures de charge réelles.'
   }
 }
+
+export const sortedIoProfiles = Object.entries(ioProfiles)
+  .sort(([, left], [, right]) => left.label.localeCompare(right.label, 'fr'))
 
 export function parseCapacityInput(value) {
   const input = String(value).trim()

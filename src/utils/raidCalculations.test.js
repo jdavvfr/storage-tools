@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, ioProfiles, raidDefinitions } from './raidCalculations.js'
+import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, DEFAULT_IO_PROFILE, ioProfiles, raidDefinitions, sortedIoProfiles } from './raidCalculations.js'
 
 const disk = { rebuildMBps: 200, readIops: 100, writeIops: 100, readBandwidthMBps: 200, writeBandwidthMBps: 200 }
 const comparisonArgs = { diskCount: 8, hotSpares: 0, diskSizeTB: 10, groupCount: 2, disk, rebuildLoad: 40 }
@@ -166,8 +166,8 @@ test('sequential parity writes use full-stripe costs and larger blocks hit bandw
 
 test('usage profiles provide valid ratios, access patterns, and block recommendations', () => {
   assert.deepEqual(
-    Object.values(ioProfiles).map(profile => profile.label),
-    ['Sauvegarde', 'Virtualisation', 'Fichier', 'Base de données', 'Personnalisé']
+    sortedIoProfiles.map(([, profile]) => profile.label),
+    ['Fichiers NAS', 'Personnalisé', 'Sauvegarde', 'Vidéosurveillance', 'Virtualisation']
   )
 
   for (const profile of Object.values(ioProfiles)) {
@@ -177,13 +177,23 @@ test('usage profiles provide valid ratios, access patterns, and block recommenda
     assert.ok(profile.recommendation.length > 0)
   }
 
-  assert.equal(ioProfiles.database.accessPattern, 'random')
   assert.equal(ioProfiles.virtualization.accessPattern, 'random')
   assert.equal(ioProfiles.virtualization.blockSizeKiB, 8)
   assert.equal(ioProfiles.virtualization.readPercent, 70)
   assert.equal(ioProfiles.files.blockSizeKiB, 64)
   assert.equal(ioProfiles.backup.accessPattern, 'sequential')
   assert.equal(ioProfiles.backup.readPercent, 0)
+  assert.equal(ioProfiles.surveillance.readPercent, 10)
+  assert.equal(ioProfiles.surveillance.accessPattern, 'sequential')
+  assert.equal(ioProfiles.surveillance.blockSizeKiB, 256)
+  assert.match(ioProfiles.surveillance.recommendation, /enregistrement continu/)
+})
+
+test('Virtualisation is the consistent default IO profile', () => {
+  assert.equal(DEFAULT_IO_PROFILE, 'virtualization')
+  assert.equal(ioProfiles[DEFAULT_IO_PROFILE].readPercent, 70)
+  assert.equal(ioProfiles[DEFAULT_IO_PROFILE].accessPattern, 'random')
+  assert.equal(ioProfiles[DEFAULT_IO_PROFILE].blockSizeKiB, 8)
 })
 
 test('selected usage profiles drive RAID IOPS estimates from their workload settings', () => {
@@ -194,13 +204,13 @@ test('selected usage profiles drive RAID IOPS estimates from their workload sett
     raid: 'RAID5',
     ...profile
   })
-  const database = resultForProfile(ioProfiles.database)
+  const surveillance = resultForProfile(ioProfiles.surveillance)
   const backup = resultForProfile(ioProfiles.backup)
   const files = resultForProfile(ioProfiles.files)
 
-  assert.notEqual(database.totalIops, backup.totalIops)
-  assert.notEqual(database.ioCosts.writeReads, backup.ioCosts.writeReads)
-  assert.notEqual(database.effectiveDiskReadIops, files.effectiveDiskReadIops)
+  assert.notEqual(surveillance.totalIops, backup.totalIops)
+  assert.notEqual(surveillance.ioCosts.writeReads, backup.ioCosts.writeReads)
+  assert.notEqual(surveillance.effectiveDiskReadIops, files.effectiveDiskReadIops)
 })
 
 test('invalid workload ratios and block sizes are rejected', () => {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { diskTypes } from '../data/disks'
-import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, ioProfiles, raidDefinitions, tbToPB, tiBToPiB } from '../utils/raidCalculations'
+import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, DEFAULT_IO_PROFILE, ioProfiles, raidDefinitions, sortedIoProfiles, tbToPB, tiBToPiB } from '../utils/raidCalculations'
+import { sortRaidComparison } from '../utils/raidComparison'
 import { formatIops } from '../utils/formatIops'
 import AboutSection from './AboutSection'
 import { RaidDiagram } from './RaidEnhancements'
@@ -11,9 +12,15 @@ const capacity = (tib, pib) => pib ? `${number(tiBToPiB(tib), 3)} PiB` : `${numb
 const decimal = (tb, pib) => pib ? `${number(tbToPB(tb), 3)} PB` : `${number(tb, 2)} TB`
 const duration = h => h >= 48 ? `${number(h / 24, 1)} jours` : `${number(h, 1)} h`
 const comparisonSortOptions = [
+  { key: 'raid', label: 'RAID' },
+  { key: 'usableTB', label: 'CAPACITÉ UTILE' },
   { key: 'efficiencyInstalled', label: 'RENDEMENT INSTALLÉ' },
   { key: 'readBandwidthMBps', label: 'DÉBIT LECTURE' },
-  { key: 'readIops', label: 'IOPS LECTURE' }
+  { key: 'readIops', label: 'IOPS LECTURE' },
+  { key: 'writeBandwidthMBps', label: 'DÉBIT ÉCRITURE' },
+  { key: 'writeIops', label: 'IOPS ÉCRITURE' },
+  { key: 'rebuild.realistic', label: 'REBUILD RÉALISTE' },
+  { key: 'resilience', label: 'RÉSILIENCE' }
 ]
 const diskPerformanceFields = [
   { key: 'readIops', label: 'IOPS lecture', unit: 'IOPS', format: formatIops },
@@ -54,7 +61,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
   const calculateIops = true
   const calculateRebuild = advanced
   const [usePiB, setUsePiB] = useState(false)
-  const defaultProfile = advanced ? 'backup' : 'database'
+  const defaultProfile = DEFAULT_IO_PROFILE
   const [ioProfile, setIoProfile] = useState(defaultProfile)
   const [readPercent, setReadPercent] = useState(ioProfiles[defaultProfile].readPercent)
   const [accessPattern, setAccessPattern] = useState(ioProfiles[defaultProfile].accessPattern)
@@ -90,12 +97,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
   const result = calculateRaid(args)
   const comparison = advanced ? buildRaidComparison(args) : []
   const validComparison = comparison.filter(row => row.result.valid)
-  const sortedComparison = comparisonSort
-    ? [...validComparison].sort((a, b) => {
-        const difference = a.result[comparisonSort.key] - b.result[comparisonSort.key]
-        return comparisonSort.direction === 'ascending' ? difference : -difference
-      })
-    : validComparison
+  const sortedComparison = sortRaidComparison(validComparison, comparisonSort)
   const configuredComparison = validComparison.find(row => row.raid === raid)
   const selectedComparisonRaid = manualSelection?.parameterRevision === parameterRevision &&
     validComparison.some(row => row.raid === manualSelection.raid)
@@ -144,8 +146,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
           <label><span>Disques actifs</span><input type="number" min="1" step="1" placeholder="Nombre de disques" value={diskCount} onChange={e => updateParameter(setDiskCount, e.target.value)} /></label>
           <label><span>Capacité par disque</span><div className="input-unit"><input type="number" step="1" placeholder="Capacité" value={diskSizeTB} onChange={e => updateParameter(setDiskSizeTB, e.target.value)} /><em>TB</em></div></label>
           <label><span>Hot spares</span><input type="number" min="0" step="1" value={hotSpares} onChange={e => updateParameter(setHotSpares, Number(e.target.value))} /></label>
-          {!advanced && <label><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{Object.entries(ioProfiles).map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>}
-          {advanced && <label><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{Object.entries(ioProfiles).map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>}
+          <label><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{sortedIoProfiles.map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>
           {grouped && <label className="wide"><span>Nombre de groupes</span><input type="number" min="2" step="1" value={groupCount} onChange={e => updateParameter(setGroupCount, Number(e.target.value))} /><small>{diskCount && groupCount ? `${number(Number(diskCount) / groupCount, 1)} disques actifs par groupe` : ''}</small></label>}
         </div>
         {definition && <div className="raid-info"><span>{definition.description}</span><strong>Coût d’écriture aléatoire ×{definition.writePenalty}</strong></div>}
@@ -228,16 +229,17 @@ export default function RaidCalculator({ active = true, advanced = false }) {
         <p className="profile-sum">Sélectionnez une ligne (Entrée ou Espace au clavier) pour afficher ce niveau RAID dans l’organisation et l’analyse de reconstruction.</p>
         <div className="table-wrap">
           <table aria-label="Comparaison RAID">
-            <thead><tr><th>RAID</th><th>CAPACITÉ UTILE</th>{comparisonSortOptions.map(({ key, label }) => {
+            <thead><tr>{comparisonSortOptions.map(({ key, label }) => {
               const isSorted = comparisonSort?.key === key
               const direction = isSorted ? comparisonSort.direction : null
               const nextDirection = direction === 'ascending' ? 'décroissant' : 'croissant'
 
-              return <th key={key} aria-sort={direction || 'none'}>
+              return <th key={key} scope="col" aria-sort={direction || 'none'}>
                 <button
                   type="button"
                   className="raid-sort-button"
                   aria-label={`Trier par ${label} par ordre ${nextDirection}`}
+                  aria-pressed={isSorted}
                   onClick={() => setComparisonSort(current => ({
                     key,
                     direction: current?.key === key && current.direction === 'ascending' ? 'descending' : 'ascending'
@@ -246,7 +248,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
                   {label}<span aria-hidden="true">{direction === 'ascending' ? '↑' : direction === 'descending' ? '↓' : '↕'}</span>
                 </button>
               </th>
-            })}<th>DÉBIT ÉCRITURE</th><th>IOPS ÉCRITURE</th><th>REBUILD RÉALISTE</th><th>RÉSILIENCE</th></tr></thead>
+            })}</tr></thead>
             <tbody>{sortedComparison.map(x => {
               const isSelected = x.raid === selectedComparisonRaid
               const selectRow = () => {

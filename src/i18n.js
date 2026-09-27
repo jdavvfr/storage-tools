@@ -246,7 +246,7 @@ export const translations = {
     'à la ligne sélectionnée': 'than the selected row',
     'inférieure': 'lower',
     'supérieure': 'higher',
-    'Sélectionnez une ligne (Entrée ou Espace au clavier) pour afficher ce niveau RAID dans l’organisation et l’analyse de reconstruction.': 'Select a row (press Enter or Space) to show that RAID level in the layout and rebuild analysis.',
+    'Sélectionnez une ligne pour afficher ce niveau RAID dans l’organisation et l’analyse de reconstruction.': 'Select a row to show that RAID level in the layout and rebuild analysis.',
     'Les IOPS de chaque ligne utilisent le profil sélectionné, le bloc de': 'Each row’s IOPS use the selected profile, the',
     'et les coûts physiques propres à chaque niveau RAID.': 'block size, and the physical costs specific to each RAID level.',
     'Analyse de reconstruction': 'Rebuild analysis',

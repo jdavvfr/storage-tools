@@ -4,6 +4,12 @@ export const tiBToTB = value => value / TB_TO_TIB
 export const tiBToPiB = value => value / 1024
 export const tbToPB = value => value / 1000
 
+export function calculateNominalRebuildBandwidth(referenceDisk, performanceDisk) {
+  const readScale = performanceDisk.readBandwidthMBps / referenceDisk.readBandwidthMBps
+  const writeScale = performanceDisk.writeBandwidthMBps / referenceDisk.writeBandwidthMBps
+  return referenceDisk.rebuildMBps * Math.min(readScale, writeScale)
+}
+
 export const ioProfiles = {
   backup: {
     label: 'Sauvegarde',

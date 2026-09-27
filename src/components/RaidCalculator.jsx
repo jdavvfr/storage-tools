@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { diskTypes } from '../data/disks'
-import { buildRaidComparison, calculateRaid, ioProfiles, raidDefinitions, tbToPB, tiBToPiB } from '../utils/raidCalculations'
+import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, ioProfiles, raidDefinitions, tbToPB, tiBToPiB } from '../utils/raidCalculations'
 import { formatIops } from '../utils/formatIops'
 import AboutSection from './AboutSection'
 import { RaidDiagram } from './RaidEnhancements'
@@ -73,7 +73,11 @@ export default function RaidCalculator({ active = true, advanced = false }) {
   const calculationDisk = disk && advanced
     ? {
         ...disk,
-        ...Object.fromEntries(diskPerformanceFields.map(({ key }) => [key, Number(currentDiskPerformanceValues[key])]))
+        ...Object.fromEntries(diskPerformanceFields.map(({ key }) => [key, Number(currentDiskPerformanceValues[key])])),
+        rebuildMBps: calculateNominalRebuildBandwidth(disk, {
+          readBandwidthMBps: Number(currentDiskPerformanceValues.readBandwidthMBps),
+          writeBandwidthMBps: Number(currentDiskPerformanceValues.writeBandwidthMBps)
+        })
       }
     : disk
   const validDiskPerformance = disk && diskPerformanceFields.every(({ key }) => {
@@ -190,13 +194,13 @@ export default function RaidCalculator({ active = true, advanced = false }) {
               <small id={`${key}-reference`}>Référence indicative : {format(disk[key])}</small>
             </label>
           ))}
-          <div><span>Débit rebuild nominal retenu</span><strong>{bandwidth(disk.rebuildMBps)}</strong></div>
+          <div><span>Débit rebuild nominal retenu</span><strong>{bandwidth(calculationDisk.rebuildMBps)}</strong></div>
         </div>
         <p className="profile-sum">
           {customizedDiskPerformance
             ? 'Au moins une valeur de performance est personnalisée et utilisée dans les calculs. Les références sont indicatives, non rattachées à une référence constructeur.'
             : 'Valeurs de référence indicatives du calculateur, non rattachées à une référence constructeur.'}
-          {' '}Le débit rebuild reste nominal et indépendant de ces réglages.
+          {' '}Le débit rebuild nominal est ajusté automatiquement selon le plus faible des ratios de débit lecture/écriture personnalisés, en conservant le rapport nominal du profil de disque.
         </p>
         {!validDiskPerformance && !result.ready && <p className="error" role="alert">Chaque valeur de performance doit être un nombre fini supérieur à 0.</p>}
         </> : <div className="empty">Les caractéristiques du disque apparaîtront ici</div>}</article>}

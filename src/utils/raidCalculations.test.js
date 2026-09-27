@@ -1,9 +1,47 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, DEFAULT_IO_PROFILE, ioProfiles, raidDefinitions, sortedIoProfiles } from './raidCalculations.js'
+import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, DEFAULT_IO_PROFILE, getValidRaidGroupCounts, ioProfiles, raidDefinitions, sortedIoProfiles } from './raidCalculations.js'
 
 const disk = { rebuildMBps: 200, readIops: 100, writeIops: 100, readBandwidthMBps: 200, writeBandwidthMBps: 200 }
 const comparisonArgs = { diskCount: 8, hotSpares: 0, diskSizeTB: 10, groupCount: 2, disk, rebuildLoad: 40 }
+
+test('valid RAID 50/60 group counts respect equal groups and minimum group sizes', () => {
+  assert.deepEqual(getValidRaidGroupCounts('RAID50', 12), [2, 3, 4])
+  assert.deepEqual(getValidRaidGroupCounts('RAID60', 12), [2, 3])
+  assert.deepEqual(getValidRaidGroupCounts('RAID50', 10), [2])
+  assert.deepEqual(getValidRaidGroupCounts('RAID60', 9), [])
+  assert.deepEqual(getValidRaidGroupCounts('RAID5', 12), [])
+  assert.deepEqual(getValidRaidGroupCounts('RAID50', 12.5), [])
+})
+
+test('RAID 50/60 reject group counts outside the valid disk configuration', () => {
+  for (const args of [
+    { raid: 'RAID50', diskCount: 8, groupCount: 3 },
+    { raid: 'RAID50', diskCount: 8, groupCount: 9 },
+    { raid: 'RAID60', diskCount: 12, groupCount: 4 }
+  ]) {
+    const result = calculateRaid({ ...comparisonArgs, ...args })
+    assert.equal(result.valid, false)
+    assert.match(result.message, /groupes|divisibles|disques actifs/)
+  }
+})
+
+test('changing a valid RAID 50 group count updates capacity, IO costs, and rebuild domain', () => {
+  const args = { ...comparisonArgs, raid: 'RAID50', diskCount: 12, accessPattern: 'sequential' }
+  const twoGroups = calculateRaid({ ...args, groupCount: 2 })
+  const fourGroups = calculateRaid({ ...args, groupCount: 4 })
+
+  assert.equal(twoGroups.valid, true)
+  assert.equal(fourGroups.valid, true)
+  assert.equal(twoGroups.groupCount, 2)
+  assert.equal(fourGroups.groupCount, 4)
+  assert.equal(twoGroups.usableDisks, 10)
+  assert.equal(fourGroups.usableDisks, 8)
+  assert.equal(twoGroups.affectedGroupSize, 6)
+  assert.equal(fourGroups.affectedGroupSize, 3)
+  assert.notEqual(twoGroups.ioCosts.writeWrites, fourGroups.ioCosts.writeWrites)
+  assert.notEqual(twoGroups.rebuild.realistic, fourGroups.rebuild.realistic)
+})
 
 test('realistic rebuild estimates reflect each RAID recovery domain', () => {
   const comparison = buildRaidComparison(comparisonArgs)

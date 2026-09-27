@@ -4,7 +4,7 @@ import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, D
 import { sortRaidComparison } from '../utils/raidComparison'
 import { formatIops } from '../utils/formatIops'
 import AboutSection from './AboutSection'
-import { RaidDiagram } from './RaidEnhancements'
+import { RaidDiagram, RaidGroupCountControl } from './RaidEnhancements'
 
 const number = (v, d = 0) => new Intl.NumberFormat('fr-FR', { maximumFractionDigits: d }).format(v || 0)
 const bandwidth = v => v >= 1e3 ? `${number(v / 1e3, 2)} Go/s` : `${number(v)} Mo/s`
@@ -147,7 +147,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
           <label><span>Capacité par disque</span><div className="input-unit"><input type="number" step="1" placeholder="Capacité" value={diskSizeTB} onChange={e => updateParameter(setDiskSizeTB, e.target.value)} /><em>TB</em></div></label>
           <label><span>Hot spares</span><input type="number" min="0" step="1" value={hotSpares} onChange={e => updateParameter(setHotSpares, Number(e.target.value))} /></label>
           <label><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{sortedIoProfiles.map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>
-          {grouped && <label className="wide"><span>Nombre de groupes</span><input type="number" min="2" step="1" value={groupCount} onChange={e => updateParameter(setGroupCount, Number(e.target.value))} /><small>{diskCount && groupCount ? `${number(Number(diskCount) / groupCount, 1)} disques actifs par groupe` : ''}</small></label>}
+          {grouped && <div className="wide"><RaidGroupCountControl id={`raid-group-count-configuration-${advanced ? 'advanced' : 'basic'}`} raid={raid} diskCount={diskCount} groupCount={groupCount} onChange={value => updateParameter(setGroupCount, value)} /></div>}
         </div>
         {definition && <div className="raid-info"><span>{definition.description}</span><strong>Coût d’écriture aléatoire ×{definition.writePenalty}</strong></div>}
         {!ready && <div className="invitation">Sélectionnez le disque, le RAID, le nombre et la capacité des disques</div>}{result.ready && !result.valid && <div className="error">{result.message}</div>}</article>
@@ -221,7 +221,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
         </div>
         <p className="profile-recommendation"><strong>Recommandation — {selectedProfile.label} :</strong> {selectedProfile.recommendation}</p>
       </section>
-      <RaidDiagram raid={raid} diskCount={diskCount} hotSpares={hotSpares} groupCount={groupCount} sectionNumber="04" />
+      <RaidDiagram raid={raid} diskCount={diskCount} hotSpares={hotSpares} groupCount={groupCount} onGroupCountChange={value => updateParameter(setGroupCount, value)} sectionNumber="04" />
     </>}
 
     {advanced && validComparison.length > 0 && selectedResult && <>
@@ -309,7 +309,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
         <p className="profile-sum">Les IOPS de chaque ligne utilisent le profil sélectionné, le bloc de {blockSizeKiB} KiB et les coûts physiques propres à chaque niveau RAID.</p>
       </section>
 
-      <RaidDiagram raid={selectedComparisonRaid} diskCount={diskCount} hotSpares={hotSpares} groupCount={groupCount} sectionNumber="05" />
+      <RaidDiagram raid={selectedComparisonRaid} diskCount={diskCount} hotSpares={hotSpares} groupCount={groupCount} onGroupCountChange={value => updateParameter(setGroupCount, value)} sectionNumber="05" />
 
       <section className="panel"><Heading n="06" title="Analyse de reconstruction" badge={`${selectedComparison.definition.label} · ${selectedResult.affectedGroupSize} disques dans le domaine concerné`} />
         <div className="rebuild-load"><label><span>Charge pendant le rebuild</span><div className="input-unit"><input type="number" min="0" max="85" step="1" value={rebuildLoad} onChange={e => updateParameter(setRebuildLoad, Number(e.target.value))} /><em>%</em></div></label></div>

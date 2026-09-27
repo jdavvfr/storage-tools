@@ -4,6 +4,8 @@ import CopyDurationEstimator from './components/CopyDurationEstimator'
 import RaidCalculator from './components/RaidCalculator'
 import TapeLtoTools from './components/TapeLtoTools'
 import VolumeGrowthCalculator from './components/VolumeGrowthCalculator'
+import englishFlag from './flag/gb.svg'
+import frenchFlag from './flag/fr.svg'
 import { useLanguage } from './LanguageContext'
 import './App.css'
 
@@ -25,7 +27,6 @@ function App() {
 
   return <main className="shell">
     <div className="language-bar">
-      <span>{language === 'fr' ? '🇫🇷' : '🇬🇧'}</span>
       <span className="visually-hidden" id="language-label">{language === 'fr' ? 'Langue : français' : 'Language: English'}</span>
       <button
         type="button"
@@ -37,8 +38,8 @@ function App() {
       >
         <span className={`language-switch__thumb${language === 'en' ? ' language-switch__thumb--right' : ''}`} />
       </button>
-      <span className={language === 'en' ? 'language-code language-code--active' : 'language-code'}>EN</span>
-      <span className={language === 'fr' ? 'language-code language-code--active' : 'language-code'}>FR</span>
+      <img className={`language-flag${language === 'en' ? ' language-flag--active' : ''}`} src={englishFlag} alt="" aria-hidden="true" />
+      <img className={`language-flag${language === 'fr' ? ' language-flag--active' : ''}`} src={frenchFlag} alt="" aria-hidden="true" />
     </div>
     <nav className="tool-navigation" aria-label={t('Outils de stockage')}>
       <button type="button" className={activeTool === 'raid' ? 'active' : ''} aria-current={activeTool === 'raid' ? 'page' : undefined} onClick={() => setActiveTool('raid')}>{t('RAID Calculator Basic')}</button>

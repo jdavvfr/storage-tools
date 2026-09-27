@@ -33,16 +33,15 @@ body {
   font-weight: 750;
 }
 
-.language-bar > span:first-child {
-  font-size: 1.05rem;
+.language-flag {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  opacity: 0.45;
 }
 
-.language-code {
-  color: #647890;
-}
-
-.language-code--active {
-  color: #d8e7f5;
+.language-flag--active {
+  opacity: 1;
 }
 
 .language-switch {

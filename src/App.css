@@ -916,6 +916,36 @@ footer strong {
   color: #fbbf24;
 }
 
+footer.raid-assumptions {
+  display: block;
+}
+
+.raid-assumptions > strong {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.raid-assumptions__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.raid-assumptions__grid h3 {
+  margin: 0 0 8px;
+  color: #d6e0ed;
+  font-size: 0.9rem;
+}
+
+.raid-assumptions__grid p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.raid-assumptions__grid p + p {
+  margin-top: 10px;
+}
+
 @media (max-width: 1050px) {
   .raid-parameter-grid,
   .raid-layout--advanced .raid-parameter-grid {
@@ -986,5 +1016,9 @@ footer strong {
   .spare-note,
   footer {
     flex-direction: column;
+  }
+
+  .raid-assumptions__grid {
+    grid-template-columns: 1fr;
   }
 }

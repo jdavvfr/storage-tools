@@ -316,14 +316,48 @@ export default function RaidCalculator({ active = true, advanced = false }) {
         <div className="rebuild-grid">
         <RebuildCard title="Optimiste" value={selectedResult.rebuild.optimistic} detail={selectedResult.rebuildSupported ? 'Débit nominal, aucune charge applicative' : 'Impossible : RAID 0 ne protège pas les données'} accent="green" />
         <RebuildCard title="Réaliste" value={selectedResult.rebuild.realistic} detail={selectedResult.rebuildSupported ? `Charge ${rebuildLoad} % · facteur domaine ×${number(selectedResult.rebuild.groupWorkloadFactor, 2)}` : 'Impossible : RAID 0 ne protège pas les données'} accent="orange" />
-        <RebuildCard title="Dégradé" value={selectedResult.rebuild.degraded} detail={selectedResult.rebuildSupported ? '35 % de marge supplémentaire sur le temps réaliste' : 'Impossible : RAID 0 ne protège pas les données'} accent="red" />
+        <RebuildCard title="Dégradé" value={selectedResult.rebuild.degraded} detail={selectedResult.rebuildSupported ? 'Temps réaliste divisé par 0,65 (environ +53,8 %)' : 'Impossible : RAID 0 ne protège pas les données'} accent="red" />
       </div><div className={`spare-note ${selectedResult.spares ? 'ok' : 'warning'}`}><strong>{selectedResult.hotSpareStatus}</strong><span>{selectedResult.spares ? 'La reconstruction peut démarrer automatiquement si le contrôleur est configuré pour utiliser le spare' : 'Prévoir un remplacement manuel rapide pour limiter la fenêtre sans redondance complète'}</span></div></section>
 
-      <footer><strong>Hypothèses IOPS et rebuild</strong><span>
-        {calculateIops && <>Les IOPS logiques sont limitées par les budgets physiques cumulés des disques actifs : une lecture logique consomme 1 lecture physique ; une écriture aléatoire consomme RAID 0 : 1 écriture, RAID 1/10 : 2 écritures, RAID 5/50 : 2 lectures + 2 écritures, RAID 6/60 : 3 lectures + 3 écritures (read-modify-write). Les écritures séquentielles RAID 5/6/50/60 sont supposées regroupées et alignées en bandes complètes (hypothèse optimiste) : aucune lecture préalable et un coût d’écriture égal au nombre de disques du groupe divisé par ses disques de données. Les lectures des miroirs sont supposées réparties entre leurs membres. Les références IOPS par disque sont plafonnées par le débit nominal divisé par la taille de bloc ; le profil et le ratio lecture/écriture déterminent ensuite la charge logique soutenable. C’est un modèle théorique simplifié, pas une mesure ni une donnée constructeur garantie : il ignore cache, contrôleur, files, granularité réelle des E/S et limites de bus. Les recommandations sont des points de départ à ajuster avec les traces de l’application.</>}
-        {calculateIops && calculateRebuild && ' '}
-        {calculateRebuild && <>Pour la reconstruction, temps nominal = capacité / débit retenu ; le scénario réaliste applique la charge saisie et ajoute 8 % (RAID 5/50) ou 12 % (RAID 6/60) de contention par membre du domaine au-delà de 2. Le scénario dégradé ajoute 35 % au temps réaliste. RAID 0 ne peut pas reconstruire un disque. Ces facteurs ne sont pas des garanties : contrôleur, firmware, priorité, erreurs de lecture et E/S réelles peuvent fortement modifier les durées.</>}
-      </span></footer>
+      <footer className="raid-assumptions">
+        <strong>Hypothèses IOPS et rebuild</strong>
+        <div className="raid-assumptions__grid">
+          <section>
+            <h3>Estimation des IOPS</h3>
+            <p>
+              Les IOPS logiques sont limitées par les budgets physiques cumulés des disques actifs.
+              Une lecture logique coûte une lecture physique. Pour une écriture aléatoire, le modèle
+              compte 1 écriture en RAID 0, 2 écritures en RAID 1/10, 2 lectures + 2 écritures en
+              RAID 5/50 et 3 lectures + 3 écritures en RAID 6/60. Les écritures séquentielles RAID
+              5/6/50/60 supposent des bandes complètes alignées, sans lecture préalable ; leur coût
+              est le nombre de disques du groupe divisé par le nombre de disques de données. Les
+              lectures des miroirs sont supposées réparties entre leurs membres. Les IOPS par disque
+              sont plafonnées par le débit nominal divisé par la taille de bloc ; le profil et le
+              ratio lecture/écriture déterminent la charge logique estimée.
+            </p>
+            <p>
+              Ce modèle simplifié n’est ni une mesure ni une garantie constructeur. Il ignore le
+              cache, le contrôleur, les files d’attente, la granularité réelle des E/S et les limites
+              de bus. Ajustez les recommandations à partir des traces de charge de l’application.
+            </p>
+          </section>
+          <section>
+            <h3>Estimation du rebuild</h3>
+            <p>
+              Le temps nominal correspond à la capacité du disque divisée par le débit de rebuild
+              retenu. Le scénario réaliste applique la charge saisie et un facteur de contention :
+              8 % par membre au-delà de deux en RAID 5/50, 12 % en RAID 6/60, et aucun facteur
+              supplémentaire en RAID 1/10. Pour RAID 50/60, le domaine considéré est un groupe.
+              Le scénario dégradé divise le temps réaliste par 0,65 (environ 1,54 fois plus long,
+              soit +53,8 %). RAID 0 ne permet pas de reconstruire un disque.
+            </p>
+            <p>
+              Ces scénarios ne sont pas des garanties : contrôleur, firmware, priorités, erreurs de
+              lecture et charge réelle peuvent modifier sensiblement les durées.
+            </p>
+          </section>
+        </div>
+      </footer>
 
     </>}
 

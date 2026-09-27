@@ -34,8 +34,12 @@ test('uses English terms for French main navigation and page titles', () => {
 test('translates the general Storage Tools about section into English', () => {
   assert.equal(translate('À PROPOS DE STORAGE TOOLS', 'en'), 'ABOUT STORAGE TOOLS')
   assert.equal(
-    translate('Réunir ces outils au même endroit simplifie les tâches quotidiennes de stockage et permet d’obtenir rapidement des estimations cohérentes.', 'en'),
-    'Bringing these tools together simplifies everyday storage tasks and helps you get consistent estimates quickly.'
+    translate('Storage Tools propose des calculateurs et outils de dimensionnement pour le stockage, la protection des données et les infrastructures de datacenter.', 'en'),
+    'Storage Tools offers calculators and sizing tools for storage, data protection, and datacenter infrastructure.'
+  )
+  assert.equal(
+    translate('Les résultats fournis sont des estimations destinées à faciliter les études et avant-ventes. Ils doivent être validés au regard des recommandations constructeurs et des exigences du projet.', 'en'),
+    'The results provided are estimates intended to support studies and presales. They should be validated against vendor recommendations and project requirements.'
   )
 })
 

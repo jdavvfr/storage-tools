@@ -4,8 +4,8 @@ Free online storage tools for capacity planning.
 
 ## Available tools
 
-- RAID Calculator: usable capacity, hot spare sizing, rebuild estimates, storage efficiency, and RAID-level comparisons.
-- RAID Calculator Advanced: all RAID Calculator configuration and comparison features, plus an IO profile and estimated read/write IOPS.
+- RAID Calculator: usable capacity, hot spare sizing, rebuild estimates, storage efficiency, and RAID-level comparisons with read/write throughput.
+- RAID Calculator Advanced: all RAID Calculator features, plus an IO profile, estimated read/write IOPS, and rebuild load controls and scenarios.
 - To / TiB converter: bidirectional conversion between decimal terabytes (To) and binary tebibytes (TiB). It accepts a comma or point as the decimal separator.
 - Copy duration estimator: estimates transfer time from a data volume and throughput, with decimal and binary byte units as well as decimal bit rates.
 - Volume growth calculator: projects a source volume over a whole number of years using a compound annual growth rate, and displays the target in the source unit.
@@ -18,7 +18,7 @@ The copy duration estimator uses decimal units (1 To = 10^12 bytes, 1 Go = 10^9 
 The volume growth calculator applies `target = source × (1 + annual rate)^years`; enter the annual rate as a percentage (for example, `5` for 5%). It accepts a non-negative source volume, an annual rate of at least -100%, and a positive whole number of years. Decimal or binary volume units are preserved in the displayed target, and a comma or point is accepted as the decimal separator.
 Tape LTO capacity estimates use native capacities of 6 To (LTO-7), 12 To (LTO-8), and 18 To (LTO-9) per cartridge. The optional compressed-capacity estimate assumes a 2.5:1 compression ratio; actual compression varies by data and may be lower. This assumption affects cartridge capacity only. Native write-rate references are 300 Mo/s, 360 Mo/s, and 400 Mo/s per reader for LTO-7, LTO-8, and LTO-9 respectively. Write-duration estimates use the entered source volume and assume a constant native sequential rate, or the custom rate entered by the user. VM export jobs optionally scale the aggregate rate linearly by the reader count, assuming balanced distribution and ideal speedup; NAS jobs use one reader without parallelization. The volume and cartridge estimates always remain based on the full volume. Estimates exclude tape mounting, cartridge changes, and other real-world delays. The rotation total is cartridges per full backup multiplied by a positive whole number of identical sets/cycles to retain; it does not model GFS rotations.
 
-## Rebuild estimate assumptions (RAID Calculator)
+## Rebuild estimate assumptions (both RAID calculators)
 
 Rebuild durations are per-disk estimates shown by RAID Calculator. The optimistic duration is disk capacity divided by the selected disk's nominal rebuild throughput. The realistic duration applies the configured workload percentage, then a domain-contention factor: 0% per member beyond two for RAID 1/10, 8% for each additional member in a RAID 5/50 recovery domain, and 12% for each additional member in RAID 6/60. For RAID 50/60, the recovery domain is one RAID group. The degraded estimate adds 35% to the realistic duration. These are explicit scenario assumptions, not hardware guarantees; controller behavior, rebuild priorities, workload, and read errors can substantially change actual times. RAID 0 has no redundancy, so a failed disk cannot be rebuilt.
 

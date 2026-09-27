@@ -93,7 +93,6 @@ body {
 
 .raid-controls {
   display: grid;
-  align-content: start;
   gap: 22px;
 }
 

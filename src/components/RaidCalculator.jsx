@@ -25,7 +25,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
   const [groupCount, setGroupCount] = useState(2)
   const [rebuildLoad, setRebuildLoad] = useState(40)
   const calculateIops = advanced
-  const calculateRebuild = !advanced
+  const calculateRebuild = true
   const [usePiB, setUsePiB] = useState(false)
   const [ioProfile, setIoProfile] = useState('database')
   const [readPercent, setReadPercent] = useState(ioProfiles.database.readPercent)
@@ -68,18 +68,6 @@ export default function RaidCalculator({ active = true, advanced = false }) {
         </div>
         {definition && <div className="raid-info"><span>{definition.description}</span><strong>Coût d’écriture aléatoire ×{definition.writePenalty}</strong></div>}
         {!ready && <div className="invitation">Sélectionnez le disque, le RAID, le nombre et la capacité des disques</div>}{result.ready && !result.valid && <div className="error">{result.message}</div>}</article>
-        {calculateIops && <article className="panel io-profile">
-          <Heading n="IO" title="Profil IO" badge="Charge applicative" />
-          <div className="form-grid">
-            <label className="wide"><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{Object.entries(ioProfiles).map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>
-            <label><span>Lecture</span><div className="input-unit"><input type="number" min="0" max="100" step="1" value={readPercent} onChange={e => updateReadPercent(e.target.value)} /><em>%</em></div></label>
-            <label><span>Écriture</span><div className="input-unit"><input type="number" min="0" max="100" step="1" value={100 - readPercent} onChange={e => updateReadPercent(100 - Number(e.target.value))} /><em>%</em></div></label>
-            <label><span>Type d’accès</span><select value={accessPattern} onChange={e => { setAccessPattern(e.target.value); setIoProfile('custom') }}><option value="random">Aléatoire (petites E/S)</option><option value="sequential">Séquentiel (flux contigus)</option></select></label>
-            <label><span>Taille de bloc</span><select value={blockSizeKiB} onChange={e => { setBlockSizeKiB(Number(e.target.value)); setIoProfile('custom') }}>{[4, 8, 16, 32, 64, 128, 256].map(size => <option key={size} value={size}>{size} KiB</option>)}</select></label>
-          </div>
-          <p className="profile-recommendation"><strong>Recommandation — {selectedProfile.label} :</strong> {selectedProfile.recommendation}</p>
-          <p className="profile-sum">Lecture + écriture : 100 % de la charge logique.</p>
-        </article>}
       </div>
       <article className="panel"><Heading n="02" title="Disque sélectionné" badge={disk?.technology || 'En attente'} />{disk ? <>
         <div className="disk-title"><strong>{diskType}</strong><span>{disk.technology} · {disk.interface} · {disk.workload}</span></div>
@@ -94,8 +82,21 @@ export default function RaidCalculator({ active = true, advanced = false }) {
       </> : <div className="empty">Les caractéristiques du disque apparaîtront ici</div>}</article>
     </section>
 
+    {calculateIops && <article className="panel io-profile">
+      <Heading n="IO" title="Profil IO" badge="Charge applicative" />
+      <div className="form-grid">
+        <label className="wide"><span>Profil d’usage</span><select value={ioProfile} onChange={e => selectIoProfile(e.target.value)}>{Object.entries(ioProfiles).map(([key, profile]) => <option key={key} value={key}>{profile.label}</option>)}</select></label>
+        <label><span>Lecture</span><div className="input-unit"><input type="number" min="0" max="100" step="1" value={readPercent} onChange={e => updateReadPercent(e.target.value)} /><em>%</em></div></label>
+        <label><span>Écriture</span><div className="input-unit"><input type="number" min="0" max="100" step="1" value={100 - readPercent} onChange={e => updateReadPercent(100 - Number(e.target.value))} /><em>%</em></div></label>
+        <label><span>Type d’accès</span><select value={accessPattern} onChange={e => { setAccessPattern(e.target.value); setIoProfile('custom') }}><option value="random">Aléatoire (petites E/S)</option><option value="sequential">Séquentiel (flux contigus)</option></select></label>
+        <label><span>Taille de bloc</span><select value={blockSizeKiB} onChange={e => { setBlockSizeKiB(Number(e.target.value)); setIoProfile('custom') }}>{[4, 8, 16, 32, 64, 128, 256].map(size => <option key={size} value={size}>{size} KiB</option>)}</select></label>
+      </div>
+      <p className="profile-recommendation"><strong>Recommandation — {selectedProfile.label} :</strong> {selectedProfile.recommendation}</p>
+      <p className="profile-sum">Lecture + écriture : 100 % de la charge logique.</p>
+    </article>}
+
     {result.valid && <>
-      <section className="panel"><Heading n="03" title="Comparaison RAID" badge={calculateIops ? `${readPercent} % lecture · ${100 - readPercent} % écriture` : 'Capacité'} /><div className="table-wrap"><table><thead><tr><th>RAID</th><th>Capacité utile</th><th>Rendement installé</th>{calculateIops && <><th>IOPS lecture estimées</th><th>IOPS écriture estimées</th></>}<th>Débit écriture</th>{calculateRebuild && <th>Rebuild réaliste</th>}<th>Résilience</th></tr></thead><tbody>{comparison.filter(x => x.result.valid).map(x => <tr key={x.raid} className={x.raid === raid ? 'selected' : ''}><td><b>{x.definition.label}</b></td><td>{capacity(x.result.usableTiB, usePiB)}<small>({decimal(x.result.usableTB, usePiB)})</small></td><td>{number(x.result.efficiencyInstalled, 1)} %</td>{calculateIops && <><td>{formatIops(x.result.readIops)}</td><td>{formatIops(x.result.writeIops)}</td></>}<td>{bandwidth(x.result.writeBandwidthMBps)}</td>{calculateRebuild && <td>{x.result.rebuild.realistic === null ? 'Non disponible' : duration(x.result.rebuild.realistic)}</td>}<td><Stars value={x.result.resilience} /></td></tr>)}</tbody></table></div>{calculateIops && <p className="profile-sum">Les IOPS de ce tableau utilisent le profil sélectionné, le bloc de {blockSizeKiB} KiB et les coûts physiques propres à chaque niveau RAID.</p>}</section>
+      <section className="panel"><Heading n="03" title="Comparaison RAID" badge={calculateIops ? `${readPercent} % lecture · ${100 - readPercent} % écriture` : 'Capacité'} /><div className="table-wrap"><table><thead><tr><th>RAID</th><th>Capacité utile</th><th>Rendement installé</th>{calculateIops && <th>IOPS lecture estimées</th>}<th>Débit lecture</th>{calculateIops && <th>IOPS écriture estimées</th>}<th>Débit écriture</th>{calculateRebuild && <th>Rebuild réaliste</th>}<th>Résilience</th></tr></thead><tbody>{comparison.filter(x => x.result.valid).map(x => <tr key={x.raid} className={x.raid === raid ? 'selected' : ''}><td><b>{x.definition.label}</b></td><td>{capacity(x.result.usableTiB, usePiB)}<small>({decimal(x.result.usableTB, usePiB)})</small></td><td>{number(x.result.efficiencyInstalled, 1)} %</td>{calculateIops && <td>{formatIops(x.result.readIops)}</td>}<td>{bandwidth(x.result.readBandwidthMBps)}</td>{calculateIops && <td>{formatIops(x.result.writeIops)}</td>}<td>{bandwidth(x.result.writeBandwidthMBps)}</td>{calculateRebuild && <td>{x.result.rebuild.realistic === null ? 'Non disponible' : duration(x.result.rebuild.realistic)}</td>}<td><Stars value={x.result.resilience} /></td></tr>)}</tbody></table></div>{calculateIops && <p className="profile-sum">Les IOPS de ce tableau utilisent le profil sélectionné, le bloc de {blockSizeKiB} KiB et les coûts physiques propres à chaque niveau RAID.</p>}</section>
 
       <RaidDiagram raid={raid} diskCount={diskCount} hotSpares={hotSpares} groupCount={groupCount}/>
 
@@ -119,7 +120,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
       eyebrow="À PROPOS DU CALCULATEUR"
       title={advanced ? 'Évaluer les performances d’un groupe RAID' : 'Dimensionner un groupe RAID en quelques secondes'}
       description={advanced
-        ? 'Comparez capacité, performances et IOPS estimées à partir d’un profil IO ajustable.'
+        ? 'Comparez capacité, performances, IOPS estimées et reconstruction avec un profil IO ajustable.'
         : 'Une lecture synthétique de la capacité, des performances, de la résilience et de la fenêtre de reconstruction.'}
       items={[
         {
@@ -140,12 +141,12 @@ export default function RaidCalculator({ active = true, advanced = false }) {
           value: advanced ? 'IOPS' : '3 axes',
           description: advanced ? 'IOPS lecture et écriture selon le profil IO' : 'Capacité, débit et tolérance aux pannes'
         },
-        ...(!advanced ? [{
+        {
           icon: 'rebuild',
           label: 'Reconstruction',
           value: '3 scénarios',
           description: 'Optimiste, réaliste et dégradé'
-        }] : [])
+        }
       ]}
       highlights={['Calcul en TiB et PiB', 'Disques de secours', 'Comparaison RAID', '100 % navigateur']}
     />

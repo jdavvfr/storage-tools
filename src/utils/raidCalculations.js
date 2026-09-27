@@ -71,6 +71,20 @@ export const raidDefinitions = {
   RAID60: { label: 'RAID 60', writePenalty: 6, minimumDisks: 8, resilience: 5, description: 'Groupes RAID 6 agrégés', faultTolerance: '2 pannes par groupe', rebuildSupported: true, rebuildContentionPerAdditionalDisk: 0.12 },
 }
 
+export function getValidRaidGroupCounts(raid, diskCount) {
+  if (!['RAID50', 'RAID60'].includes(raid)) return []
+
+  const active = Number(diskCount)
+  if (!Number.isInteger(active) || active <= 0) return []
+
+  const minimumGroupSize = raid === 'RAID50' ? 3 : 4
+  const validCounts = []
+  for (let groups = 2; groups <= Math.floor(active / minimumGroupSize); groups += 1) {
+    if (active % groups === 0) validCounts.push(groups)
+  }
+  return validCounts
+}
+
 export function calculateRaid({
   raid,
   diskCount,
@@ -193,10 +207,13 @@ function validate(raid, active, spares, sizeTB, groups, readRatio, accessPattern
   }
   if (['RAID1', 'RAID10'].includes(raid) && active % 2) return `${definition.label} nécessite un nombre pair de disques actifs`
   if (['RAID50', 'RAID60'].includes(raid)) {
-    const min = raid === 'RAID50' ? 3 : 4
     if (!Number.isInteger(groups) || groups < 2) return `${definition.label} nécessite au moins 2 groupes`
+    if (groups > active) return `Le nombre de groupes ne peut pas dépasser les ${active} disques actifs`
     if (active % groups) return `${active} disques actifs ne sont pas divisibles en ${groups} groupes égaux`
-    if (active / groups < min) return `Chaque groupe nécessite au moins ${min} disques actifs`
+    if (!getValidRaidGroupCounts(raid, active).includes(groups)) {
+      const min = raid === 'RAID50' ? 3 : 4
+      return `Chaque groupe nécessite au moins ${min} disques actifs`
+    }
   }
   return ''
 }

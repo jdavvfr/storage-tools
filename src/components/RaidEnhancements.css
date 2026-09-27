@@ -2,6 +2,28 @@
   margin-bottom: 18px;
 }
 
+.raid-group-count {
+  display: grid;
+  width: min(100%, 360px);
+  gap: 7px;
+  margin: 0 0 18px;
+}
+
+.raid-group-count > span {
+  color: #cbd8e7;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.raid-group-count select {
+  width: 100%;
+}
+
+.raid-group-count small {
+  color: #7f92a9;
+  font-size: 0.76rem;
+}
+
 .raid-groups {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));

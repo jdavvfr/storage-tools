@@ -1,5 +1,6 @@
 import './RaidEnhancements.css'
 import { getRaidGridConfig } from '../utils/raidGrid'
+import { getValidRaidGroupCounts } from '../utils/raidCalculations'
 
 const RAID_COLORS = {
   data: '#38bdf8',
@@ -64,7 +65,54 @@ function Disk({ type, label }) {
   )
 }
 
-export function RaidDiagram({ raid, diskCount, hotSpares = 0, groupCount = 2, sectionNumber = '04' }) {
+export function RaidGroupCountControl({ raid, diskCount, groupCount, onChange, id }) {
+  if (!['RAID50', 'RAID60'].includes(raid)) return null
+
+  const validCounts = getValidRaidGroupCounts(raid, diskCount)
+  const countIsValid = validCounts.includes(Number(groupCount))
+  const description = validCounts.length
+    ? `${!countIsValid && diskCount
+      ? 'Le nombre de groupes actuel est invalide. '
+      : ''}${diskCount && countIsValid
+      ? `${Number(diskCount) / Number(groupCount)} disques actifs par groupe. `
+      : ''}Valeurs autorisées : ${validCounts.join(', ')} groupes.`
+    : 'Aucun nombre de groupes valide pour ce nombre de disques actifs.'
+  const descriptionId = `${id}-description`
+
+  return (
+    <label className="raid-group-count" htmlFor={id}>
+      <span>Nombre de groupes</span>
+      <select
+        id={id}
+        value={countIsValid ? groupCount : ''}
+        disabled={!validCounts.length}
+        aria-invalid={Boolean(diskCount) && !countIsValid}
+        aria-describedby={descriptionId}
+        onChange={event => {
+          const nextCount = Number(event.target.value)
+          if (validCounts.includes(nextCount)) onChange(nextCount)
+        }}
+      >
+        {!countIsValid && <option value="">Choisir un nombre valide</option>}
+        {validCounts.map(count => (
+          <option key={count} value={count}>
+            {count} groupes ({Number(diskCount) / count} disques par groupe)
+          </option>
+        ))}
+      </select>
+      <small id={descriptionId} aria-live="polite">{description}</small>
+    </label>
+  )
+}
+
+export function RaidDiagram({
+  raid,
+  diskCount,
+  hotSpares = 0,
+  groupCount = 2,
+  onGroupCountChange,
+  sectionNumber = '04'
+}) {
   const active = Math.max(0, Number(diskCount) || 0)
   const spares = Math.max(0, Number(hotSpares) || 0)
   const groups = raidLayout(raid, active, groupCount)
@@ -81,6 +129,15 @@ export function RaidDiagram({ raid, diskCount, hotSpares = 0, groupCount = 2, se
         </div>
         <b>{raid} · {active} disques actifs</b>
       </div>
+      {['RAID50', 'RAID60'].includes(raid) && (
+        <RaidGroupCountControl
+          id={`raid-group-count-${sectionNumber}`}
+          raid={raid}
+          diskCount={diskCount}
+          groupCount={groupCount}
+          onChange={onGroupCountChange}
+        />
+      )}
       <div className={`raid-groups ${grid.className}`} style={grid.style}>
         {groups.map(group => (
           <article className="raid-group" key={group.name}>

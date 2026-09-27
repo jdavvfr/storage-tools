@@ -16,7 +16,7 @@ function Stars({ value }) { return <span className="stars">{[1,2,3,4,5].map(x =>
 function Metric({ label, value, detail, accent = '' }) { return <article className={`metric ${accent}`}><span>{label}</span><strong>{value}</strong><small>{detail}</small></article> }
 function RebuildCard({ title, value, detail, accent }) { return <article className={`rebuild-card ${accent}`}><span>{title}</span><strong>{value === null ? 'Non disponible' : duration(value)}</strong><small>{detail}</small><div className="rebuild-bar"><i style={{ width: `${value === null ? 0 : Math.min(100, value / 96 * 100)}%` }} /></div></article> }
 
-export default function RaidCalculator({ active = true }) {
+export default function RaidCalculator({ active = true, advanced = false }) {
   const [raid, setRaid] = useState('')
   const [diskType, setDiskType] = useState('')
   const [diskCount, setDiskCount] = useState('')
@@ -24,8 +24,8 @@ export default function RaidCalculator({ active = true }) {
   const [diskSizeTB, setDiskSizeTB] = useState('')
   const [groupCount, setGroupCount] = useState(2)
   const [rebuildLoad, setRebuildLoad] = useState(40)
-  const [calculateIops, setCalculateIops] = useState(false)
-  const [calculateRebuild, setCalculateRebuild] = useState(false)
+  const calculateIops = advanced
+  const calculateRebuild = !advanced
   const [usePiB, setUsePiB] = useState(false)
   const [ioProfile, setIoProfile] = useState('database')
   const [readPercent, setReadPercent] = useState(ioProfiles.database.readPercent)
@@ -58,11 +58,16 @@ export default function RaidCalculator({ active = true }) {
   return <div hidden={!active}>
     <section className="workspace">
       <div className="raid-controls">
-        <div className="advanced-options">
-          <strong>Options avancées</strong>
-          <label className="advanced-option"><input type="checkbox" checked={calculateIops} onChange={e => setCalculateIops(e.target.checked)} /><span>Calculer les IOPS selon le profil IO</span></label>
-          <label className="advanced-option"><input type="checkbox" checked={calculateRebuild} onChange={e => setCalculateRebuild(e.target.checked)} /><span>Estimer le temps de reconstruction (rebuild)</span></label>
+        <article className="panel"><Heading n="01" title="Configuration RAID" badge={definition?.label || 'À configurer'} /><div className="form-grid">
+          <label><span>Type de disque</span><select value={diskType} onChange={e => setDiskType(e.target.value)}><option value="">Sélectionner un type de disque</option>{Object.keys(diskTypes).map(x => <option key={x}>{x}</option>)}</select></label>
+          <label><span>Type de RAID</span><select value={raid} onChange={e => setRaid(e.target.value)}><option value="">Sélectionner un niveau RAID</option>{Object.entries(raidDefinitions).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
+          <label><span>Disques actifs</span><input type="number" min="1" step="1" placeholder="Nombre de disques" value={diskCount} onChange={e => setDiskCount(e.target.value)} /></label>
+          <label><span>Capacité par disque</span><div className="input-unit"><input type="number" step="1" placeholder="Capacité" value={diskSizeTB} onChange={e => setDiskSizeTB(e.target.value)} /><em>TB</em></div></label>
+          <label><span>Hot spares</span><input type="number" min="0" step="1" value={hotSpares} onChange={e => setHotSpares(Number(e.target.value))} /></label>
+          {grouped && <label className="wide"><span>Nombre de groupes</span><input type="number" min="2" step="1" value={groupCount} onChange={e => setGroupCount(Number(e.target.value))} /><small>{diskCount && groupCount ? `${number(Number(diskCount) / groupCount, 1)} disques actifs par groupe` : ''}</small></label>}
         </div>
+        {definition && <div className="raid-info"><span>{definition.description}</span><strong>Coût d’écriture aléatoire ×{definition.writePenalty}</strong></div>}
+        {!ready && <div className="invitation">Sélectionnez le disque, le RAID, le nombre et la capacité des disques</div>}{result.ready && !result.valid && <div className="error">{result.message}</div>}</article>
         {calculateIops && <article className="panel io-profile">
           <Heading n="IO" title="Profil IO" badge="Charge applicative" />
           <div className="form-grid">
@@ -75,16 +80,6 @@ export default function RaidCalculator({ active = true }) {
           <p className="profile-recommendation"><strong>Recommandation — {selectedProfile.label} :</strong> {selectedProfile.recommendation}</p>
           <p className="profile-sum">Lecture + écriture : 100 % de la charge logique.</p>
         </article>}
-        <article className="panel"><Heading n="01" title="Configuration RAID" badge={definition?.label || 'À configurer'} /><div className="form-grid">
-          <label><span>Type de disque</span><select value={diskType} onChange={e => setDiskType(e.target.value)}><option value="">Sélectionner un type de disque</option>{Object.keys(diskTypes).map(x => <option key={x}>{x}</option>)}</select></label>
-          <label><span>Type de RAID</span><select value={raid} onChange={e => setRaid(e.target.value)}><option value="">Sélectionner un niveau RAID</option>{Object.entries(raidDefinitions).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}</select></label>
-          <label><span>Disques actifs</span><input type="number" min="1" step="1" placeholder="Nombre de disques" value={diskCount} onChange={e => setDiskCount(e.target.value)} /></label>
-          <label><span>Capacité par disque</span><div className="input-unit"><input type="number" step="1" placeholder="Capacité" value={diskSizeTB} onChange={e => setDiskSizeTB(e.target.value)} /><em>TB</em></div></label>
-          <label><span>Hot spares</span><input type="number" min="0" step="1" value={hotSpares} onChange={e => setHotSpares(Number(e.target.value))} /></label>
-          {grouped && <label className="wide"><span>Nombre de groupes</span><input type="number" min="2" step="1" value={groupCount} onChange={e => setGroupCount(Number(e.target.value))} /><small>{diskCount && groupCount ? `${number(Number(diskCount) / groupCount, 1)} disques actifs par groupe` : ''}</small></label>}
-        </div>
-        {definition && <div className="raid-info"><span>{definition.description}</span><strong>Coût d’écriture aléatoire ×{definition.writePenalty}</strong></div>}
-        {!ready && <div className="invitation">Sélectionnez le disque, le RAID, le nombre et la capacité des disques</div>}{result.ready && !result.valid && <div className="error">{result.message}</div>}</article>
       </div>
       <article className="panel"><Heading n="02" title="Disque sélectionné" badge={disk?.technology || 'En attente'} />{disk ? <>
         <div className="disk-title"><strong>{diskType}</strong><span>{disk.technology} · {disk.interface} · {disk.workload}</span></div>
@@ -122,8 +117,10 @@ export default function RaidCalculator({ active = true }) {
 
     <AboutSection
       eyebrow="À PROPOS DU CALCULATEUR"
-      title="Dimensionner un groupe RAID en quelques secondes"
-      description="Une lecture synthétique de la capacité, des performances, de la résilience et de la fenêtre de reconstruction."
+      title={advanced ? 'Évaluer les performances d’un groupe RAID' : 'Dimensionner un groupe RAID en quelques secondes'}
+      description={advanced
+        ? 'Comparez capacité, performances et IOPS estimées à partir d’un profil IO ajustable.'
+        : 'Une lecture synthétique de la capacité, des performances, de la résilience et de la fenêtre de reconstruction.'}
       items={[
         {
           icon: 'capacity',
@@ -138,17 +135,17 @@ export default function RaidCalculator({ active = true }) {
           description: 'HDD SATA/SAS, SSD et NVMe'
         },
         {
-          icon: 'resilience',
-          label: 'Analyse',
-          value: '4 axes',
-          description: 'Capacité, débit, IOPS et tolérance aux pannes'
+          icon: advanced ? 'performance' : 'resilience',
+          label: advanced ? 'Estimation' : 'Analyse',
+          value: advanced ? 'IOPS' : '3 axes',
+          description: advanced ? 'IOPS lecture et écriture selon le profil IO' : 'Capacité, débit et tolérance aux pannes'
         },
-        {
+        ...(!advanced ? [{
           icon: 'rebuild',
           label: 'Reconstruction',
           value: '3 scénarios',
           description: 'Optimiste, réaliste et dégradé'
-        }
+        }] : [])
       ]}
       highlights={['Calcul en TiB et PiB', 'Disques de secours', 'Comparaison RAID', '100 % navigateur']}
     />

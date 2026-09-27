@@ -36,7 +36,7 @@ export default function ToolInfoPopover({ name, sections }) {
   }
 
   return (
-    <div
+    <span
       className="tool-info"
       ref={containerRef}
       onMouseEnter={() => {
@@ -94,6 +94,6 @@ export default function ToolInfoPopover({ name, sections }) {
           ))}
         </div>
       </section>
-    </div>
+    </span>
   )
 }

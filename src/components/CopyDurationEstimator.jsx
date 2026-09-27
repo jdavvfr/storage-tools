@@ -56,8 +56,8 @@ export default function CopyDurationEstimator() {
             <div className="copy-estimator-input">
               <input
                 id="copy-volume"
-                type="text"
-                inputMode="decimal"
+                type="number"
+                step="1"
                 autoComplete="off"
                 placeholder="Volume de données"
                 value={volume}
@@ -86,8 +86,8 @@ export default function CopyDurationEstimator() {
             <div className="copy-estimator-input">
               <input
                 id="copy-throughput"
-                type="text"
-                inputMode="decimal"
+                type="number"
+                step="1"
                 autoComplete="off"
                 placeholder="Débit de transfert"
                 value={throughput}

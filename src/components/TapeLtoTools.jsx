@@ -91,8 +91,8 @@ export default function TapeLtoTools() {
             <div className="copy-estimator-input">
               <input
                 id="lto-volume"
-                type="text"
-                inputMode="decimal"
+                type="number"
+                step="1"
                 autoComplete="off"
                 placeholder="Volume de données"
                 value={volume}
@@ -150,8 +150,8 @@ export default function TapeLtoTools() {
               <label htmlFor="lto-reader-count">Nombre de lecteurs</label>
               <input
                 id="lto-reader-count"
-                type="text"
-                inputMode="numeric"
+                type="number"
+                step="1"
                 autoComplete="off"
                 value={readerCount}
                 onChange={event => setReaderCount(event.target.value)}
@@ -175,8 +175,8 @@ export default function TapeLtoTools() {
             <label htmlFor="lto-custom-rate">Débit personnalisé (Mo/s déc.)</label>
             <input
               id="lto-custom-rate"
-              type="text"
-              inputMode="decimal"
+              type="number"
+              step="1"
               autoComplete="off"
               placeholder={`Ex. ${ltoGenerations[generation].nativeThroughputMBps}`}
               value={customRate}
@@ -192,8 +192,8 @@ export default function TapeLtoTools() {
             <label htmlFor="lto-rotation-sets">Jeux/cycles identiques à conserver</label>
             <input
               id="lto-rotation-sets"
-              type="text"
-              inputMode="numeric"
+              type="number"
+              step="1"
               autoComplete="off"
               value={rotationSets}
               onChange={event => setRotationSets(event.target.value)}

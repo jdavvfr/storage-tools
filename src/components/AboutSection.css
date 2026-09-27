@@ -20,6 +20,10 @@
   margin-left: auto;
 }
 
+.about-section--wide-heading .section-intro {
+  max-width: none;
+}
+
 .about-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

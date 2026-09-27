@@ -18,8 +18,26 @@ test('translates interface copy and English storage unit abbreviations', () => {
   assert.equal(translate('4 Go/s et 2 To', 'en'), '4 GB/s et 2 TB')
 })
 
-test('keeps French copy and unknown strings unchanged', () => {
-  assert.equal(translate('Durée de copie', 'fr'), 'Durée de copie')
-  assert.equal(translate('RAID Calculator Advanced', 'fr'), 'Calculateur RAID avancé')
+test('uses English terms for French main navigation and page titles', () => {
+  assert.equal(translate('STORAGE TOOLS', 'fr'), 'Storage Tools')
+  assert.equal(translate('Outils de stockage', 'fr'), 'Storage Tools')
+  assert.equal(translate('RAID Calculator', 'fr'), 'RAID Calculator')
+  assert.equal(translate('RAID Calculator Basic', 'fr'), 'RAID Calculator Basic')
+  assert.equal(translate('RAID Calculator Advanced', 'fr'), 'RAID Calculator Advanced')
+  assert.equal(translate('Convertisseur To / TiB', 'fr'), 'TB / TiB Converter')
+  assert.equal(translate('Durée de copie', 'fr'), 'Copy Duration')
+  assert.equal(translate('Croissance volumétrique', 'fr'), 'Volume Growth')
+  assert.equal(translate('Tape LTO', 'fr'), 'LTO Tape')
+  assert.equal(translate('Outils Tape LTO', 'fr'), 'LTO Tape Tools')
+})
+
+test('preserves English labels and leaves unknown strings unchanged', () => {
+  assert.equal(translate('Outils de stockage', 'en'), 'Storage tools')
+  assert.equal(translate('RAID Calculator Basic', 'en'), 'RAID Calculator Basic')
+  assert.equal(translate('RAID Calculator Advanced', 'en'), 'RAID Calculator Advanced')
+  assert.equal(translate('Durée de copie', 'en'), 'Copy Duration')
+  assert.equal(translate('Croissance volumétrique', 'en'), 'Volume Growth')
+  assert.equal(translate('Aucun texte anglais', 'fr'), 'Aucun texte anglais')
+  assert.equal(translate('A new untranslated label', 'fr'), 'A new untranslated label')
   assert.equal(translate('A new untranslated label', 'en'), 'A new untranslated label')
 })

@@ -19,11 +19,33 @@ export const BASE_RECOMMENDATION_WEIGHTS = {
   performance: 0.10
 }
 
+export const RAID_RESILIENCE_FACTORS = {
+  RAID5: 1,
+  RAID50: 1,
+  RAID6: 0.35,
+  RAID60: 0.35,
+  RAID10: 0.25
+}
+
+export const DRIVE_SIZE_RISK_FACTORS = [
+  { minimumTB: 22, factor: 1.6 },
+  { minimumTB: 18, factor: 1.35 },
+  { minimumTB: 12, factor: 1.15 },
+  { minimumTB: 0, factor: 1 }
+]
+
+export const SINGLE_PARITY_REBUILD_SURCHARGES = [
+  { minimumTB: 22, factor: 1.75 },
+  { minimumTB: 18, factor: 1.45 },
+  { minimumTB: 12, factor: 1.2 },
+  { minimumTB: 0, factor: 1 }
+]
+
 const WORKLOAD_FACTORS = {
-  backup: { capacity: 1.15, exposure: 1.05, rebuild: 1, performance: 0.5 },
+  backup: { capacity: 1.15, exposure: 3, rebuild: 1, performance: 0.5 },
   virtualization: { capacity: 0.875, exposure: 1, rebuild: 1, performance: 1.5 },
-  database: { capacity: 0.5, exposure: 1, rebuild: 1, performance: 3 },
-  surveillance: { capacity: 0.875, exposure: 1.143, rebuild: 1, performance: 1 }
+  database: { capacity: 0.5, exposure: 0.85, rebuild: 1, performance: 3 },
+  surveillance: { capacity: 0.875, exposure: 1.8, rebuild: 1, performance: 1 }
 }
 
 const RESILIENCE_FACTORS = {
@@ -69,8 +91,32 @@ function normalize(values, lowerIsBetter = false) {
   })
 }
 
+function factorForCapacity(diskSizeTB, factors) {
+  return factors.find(({ minimumTB }) => diskSizeTB >= minimumTB)?.factor ?? 1
+}
+
+export function getDriveSizeRiskFactor(raid, diskSizeTB) {
+  if (!Object.hasOwn(RAID_RESILIENCE_FACTORS, raid) ||
+      !Number.isFinite(Number(diskSizeTB)) || Number(diskSizeTB) <= 0) return null
+
+  const baseSizeRisk = factorForCapacity(Number(diskSizeTB), DRIVE_SIZE_RISK_FACTORS)
+  const singleParitySurcharge = ['RAID5', 'RAID50'].includes(raid)
+    ? factorForCapacity(Number(diskSizeTB), SINGLE_PARITY_REBUILD_SURCHARGES)
+    : 1
+  return RAID_RESILIENCE_FACTORS[raid] * baseSizeRisk * singleParitySurcharge
+}
+
+export function calculateRecommendationExposure({ raid, rebuildHours, groupWidth, diskSizeTB }) {
+  const raidSizeRiskFactor = getDriveSizeRiskFactor(raid, diskSizeTB)
+  if (raidSizeRiskFactor === null ||
+      !Number.isFinite(Number(rebuildHours)) || Number(rebuildHours) < 0 ||
+      !Number.isFinite(Number(groupWidth)) || Number(groupWidth) <= 0) return null
+
+  return Number(rebuildHours) * Number(groupWidth) * raidSizeRiskFactor
+}
+
 function addScores(candidates, workload, weights, targetCapacityTB) {
-  const rawExposureScores = normalize(candidates.map(candidate => candidate.result.rebuild.exposureIndex), true)
+  const rawExposureScores = normalize(candidates.map(candidate => candidate.exposureIndex), true)
   const faultToleranceScores = normalize(candidates.map(candidate => candidate.failureTolerance))
   const iopsScores = normalize(candidates.map(candidate => candidate.estimatedIops))
   const bandwidthScores = normalize(candidates.map(candidate => candidate.estimatedBandwidthMBps))
@@ -104,7 +150,7 @@ function addScores(candidates, workload, weights, targetCapacityTB) {
     return { ...candidate, score: Math.round(score * 10) / 10, scoreBreakdown: breakdown }
   }).sort((left, right) =>
     right.score - left.score ||
-    left.result.rebuild.exposureIndex - right.result.rebuild.exposureIndex ||
+    left.exposureIndex - right.exposureIndex ||
     left.result.rebuild.realistic - right.result.rebuild.realistic ||
     left.diskCount - right.diskCount ||
     left.raid.localeCompare(right.raid)
@@ -156,7 +202,7 @@ function validateInput(input) {
   if (input.platformMaxDriveCount != null &&
       (!Number.isInteger(platformMaxDriveCount) || platformMaxDriveCount < 1)) return 'invalid-input'
   if (maxDiskCount > platformMaxDriveCount) return 'invalid-input'
-  if (!Number.isFinite(maxDriveCapacity) || maxDriveCapacity <= 0) return 'invalid-input'
+  if (!Number.isFinite(maxDriveCapacity) || maxDriveCapacity < 0.1 || maxDriveCapacity > 1000) return 'invalid-input'
   if (!RECOMMENDATION_DRIVE_TYPES[input.driveType] ||
       !RECOMMENDATION_WORKLOADS[input.workload] ||
       !OPTIMIZATION_PROFILES[input.optimization]) return 'invalid-input'
@@ -181,7 +227,11 @@ export function recommendRaid(input) {
   const rebuildProfile = REBUILD_WORKLOAD_PROFILES[workload.rebuildProfile]
   const driveType = RECOMMENDATION_DRIVE_TYPES[input.driveType]
   const disk = diskTypes[driveType.diskProfile]
-  const driveSizes = driveType.capacitiesTB.filter(size => size <= Number(input.maxDriveCapacityTB))
+  const maxDriveSizeTB = Number(input.maxDriveCapacityTB)
+  const driveSizes = [...new Set([
+    ...driveType.capacitiesTB.filter(size => size <= maxDriveSizeTB),
+    maxDriveSizeTB
+  ])].sort((left, right) => left - right)
   const candidates = []
 
   for (const diskSizeTB of driveSizes) {
@@ -211,6 +261,12 @@ export function recommendRaid(input) {
           if (input.targetBandwidthMBps != null && estimatedBandwidthMBps < Number(input.targetBandwidthMBps)) continue
 
           const tolerance = failureTolerance(raid, diskCount, groupCount)
+          const exposureIndex = calculateRecommendationExposure({
+            raid,
+            rebuildHours: result.rebuild.realistic,
+            groupWidth: result.affectedGroupSize,
+            diskSizeTB
+          })
           candidates.push({
             id: `${raid}-${diskCount}-${diskSizeTB}-${groupCount}`,
             raid,
@@ -224,6 +280,12 @@ export function recommendRaid(input) {
             result,
             estimatedIops: result.totalIops,
             estimatedBandwidthMBps,
+            exposureIndex,
+            raidResilienceFactor: RAID_RESILIENCE_FACTORS[raid],
+            driveSizeRiskFactor: factorForCapacity(diskSizeTB, DRIVE_SIZE_RISK_FACTORS),
+            singleParitySurcharge: ['RAID5', 'RAID50'].includes(raid)
+              ? factorForCapacity(diskSizeTB, SINGLE_PARITY_REBUILD_SURCHARGES)
+              : 1,
             failureTolerance: tolerance.count,
             failureDomain: tolerance.domain
           })

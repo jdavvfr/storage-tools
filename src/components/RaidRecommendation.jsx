@@ -74,7 +74,8 @@ function RecommendationCard({ candidate, rank, unit, language, t }) {
       <div><dt>{t('Reconstruction nominale')}</dt><dd>{formatDuration(result.rebuild.optimistic, language)}</dd></div>
       <div><dt>{t('Reconstruction réaliste')}</dt><dd>{formatDuration(result.rebuild.realistic, language)}</dd></div>
       <div><dt>{t('Hypothèses rebuild')}</dt><dd>{t('Charge')} ×{number(result.rebuild.applicationLoadCoefficient, 2, language)} · {t('Largeur RAID')} ×{number(result.rebuild.groupWidthCoefficient, 2, language)}</dd></div>
-      <div><dt>{t('Indice d’exposition')}</dt><dd>{number(result.rebuild.exposureIndex, 1, language)} {t('h·disques')}</dd></div>
+      <div><dt>{t('Indice d’exposition ajusté')}</dt><dd>{number(candidate.exposureIndex, 1, language)} {t('h·disques')}</dd></div>
+      <div><dt>{t('Facteurs de risque')}</dt><dd>{t('Résilience')} ×{number(candidate.raidResilienceFactor, 2, language)} · {t('Taille')} ×{number(candidate.driveSizeRiskFactor, 2, language)}{candidate.singleParitySurcharge > 1 ? ` · ${t('Parité simple')} ×${number(candidate.singleParitySurcharge, 2, language)}` : ''}</dd></div>
     </dl>
     <div className="recommendation-card__notes">
       <div><strong>{t('Avantages')}</strong><ul>{benefits.map(item => <li key={item}>{t(item)}</li>)}</ul></div>
@@ -176,10 +177,30 @@ export default function RaidRecommendation() {
           <legend>{t('Infrastructure')}</legend>
           <div className="recommendation-form-grid">
             <label><span>{t('Type de disque')}</span><select value={driveType} onChange={event => changeDriveType(event.target.value)}>{Object.keys(RECOMMENDATION_DRIVE_TYPES).map(type => <option key={type} value={type}>{t(type)}</option>)}</select></label>
-            <label><span>{t('Capacité maximale par disque')}</span><select value={maxDriveCapacityTB} onChange={event => setMaxDriveCapacityTB(Number(event.target.value))}>{platformCapacities.map(size => <option key={size} value={size}>{number(size, 2, language)} {t('To')}</option>)}</select></label>
+            <label>
+              <span>{t('Capacité maximale par disque')}</span>
+              <div className="input-unit">
+                <input
+                  type="number"
+                  min="0.1"
+                  max="1000"
+                  step="any"
+                  list="raid-drive-capacity-suggestions"
+                  value={maxDriveCapacityTB}
+                  aria-invalid={!Number.isFinite(Number(maxDriveCapacityTB)) || Number(maxDriveCapacityTB) < 0.1 || Number(maxDriveCapacityTB) > 1000}
+                  aria-describedby="raid-drive-capacity-note"
+                  onChange={event => setMaxDriveCapacityTB(event.target.value)}
+                />
+                <em>{t('To')}</em>
+              </div>
+              <datalist id="raid-drive-capacity-suggestions">
+                {platformCapacities.map(size => <option key={size} value={size} />)}
+              </datalist>
+            </label>
             <label><span>{t('Plateforme / châssis')}</span><select value={platformId} onChange={event => changePlatform(event.target.value)}>{RECOMMENDATION_PLATFORMS.map(item => <option key={item.id} value={item.id}>{t(item.label)} — {item.driveBays} {t('baies')}</option>)}</select></label>
             <label><span>{t('Nombre maximal de disques')}</span><input type="number" min="1" max={platform.driveBays} step="1" value={maxDiskCount} onChange={event => setMaxDiskCount(event.target.value)} aria-describedby="recommendation-platform-note" /></label>
           </div>
+          <small id="raid-drive-capacity-note">{t('Saisissez une capacité entre 0,1 et 1 000 To. Les capacités du marché proposées ne sont que des suggestions ; la valeur saisie est aussi évaluée par le moteur.')}</small>
           <small id="recommendation-platform-note">{t(platform.note)} {t('Le maximum saisi ne peut pas dépasser les baies de la plateforme sélectionnée.')}</small>
         </fieldset>
         <fieldset className="recommendation-fieldset">
@@ -199,7 +220,7 @@ export default function RaidRecommendation() {
           <small>{t('Les objectifs renseignés sont des seuils obligatoires ; laissez les champs vides pour ne pas filtrer sur la performance. Le débit vérifié est pondéré par le ratio lecture/écriture du profil IO.')}</small>
         </fieldset>
       </div>
-      <p className="recommendation-assumption"><strong>{t('Estimations, pas mesures')}.</strong> {t('Les performances reprennent les références indicatives du calculateur pour le type de média choisi. Le temps nominal est la capacité du disque divisée par son débit rebuild nominal ; le temps réaliste divise ce résultat par les coefficients de charge et de largeur RAID affichés pour chaque candidat.')}</p>
+      <p className="recommendation-assumption"><strong>{t('Estimations, pas mesures')}.</strong> {t('Les performances reprennent les références indicatives du calculateur pour le type de média choisi. Le temps nominal est la capacité du disque divisée par son débit rebuild nominal ; le temps réaliste divise ce résultat par les coefficients de charge et de largeur RAID affichés pour chaque candidat. L’exposition ajustée est le temps réaliste en heures × largeur du groupe × facteur de résilience RAID × facteur de risque taille disque × surcharge simple parité éventuelle. Tous les facteurs sont sans unité ; l’exposition reste en heures-disques ajustées.')}</p>
     </article>
 
     {!recommendation.valid && <p className="error" role="alert">{t('Entrez une capacité cible positive et des limites d’infrastructure valides.')}</p>}
@@ -215,7 +236,7 @@ export default function RaidRecommendation() {
       <section className="panel" aria-labelledby="recommendation-results-title">
         <Heading title={t('Comparatif « Versus »')} badge={t(OPTIMIZATION_PROFILES[optimization].label)} />
         <h2 className="recommendation-results-title" id="recommendation-results-title">{t('Les meilleures configurations pour')} {t(RECOMMENDATION_WORKLOADS[workload].label)}</h2>
-        <p className="profile-sum">{t('Le score /100 combine capacité utile et efficacité capacitive, exposition ajustée selon la tolérance aux pannes, durée réaliste de reconstruction et performances estimées. Le score capacité combine à 55 % une réserve utile plafonnée à deux fois la cible et à 45 % le rendement capacitif normalisé. Les métriques sont normalisées sur les configurations qui satisfont toutes les contraintes ; le meilleur score est la recommandation principale.')}</p>
+        <p className="profile-sum">{t('Le score /100 combine capacité utile et efficacité capacitive, exposition ajustée selon la tolérance aux pannes, durée réaliste de reconstruction et performances estimées. Le score capacité combine à 55 % une réserve utile plafonnée à deux fois la cible et à 45 % le rendement capacitif normalisé. Les métriques sont normalisées sur les configurations qui satisfont toutes les contraintes ; le meilleur score est la recommandation principale. Le profil d’optimisation « Capacité maximale » utilise la politique capacité existante.')}</p>
         <p className="recommendation-weight-summary"><strong>{t('Pondérations appliquées')} :</strong> {weightSummary}</p>
         <p className="recommendation-fit-reason"><strong>{t('Pourquoi cette recommandation')} :</strong> {t({
           backup: 'Pour la sauvegarde et l’archivage, le classement favorise l’efficacité capacitive et limite l’exposition pendant la reconstruction.',

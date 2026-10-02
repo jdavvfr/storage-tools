@@ -11,6 +11,7 @@ test('supports English and French language preferences', () => {
 
 test('translates interface copy and English storage unit abbreviations', () => {
   assert.equal(translate('Durée de copie', 'en'), 'Copy Duration')
+  assert.equal(translate('Unité de capacité', 'en'), 'Capacity unit')
   assert.equal(translate('RAID 0 nécessite au minimum 2 disques actifs', 'en'), 'RAID 0 requires at least 2 active drives')
   assert.equal(translate('Groupe RAID 5 2', 'en'), 'RAID 5 group 2')
   assert.equal(translate('3 hot spares disponibles', 'en'), '3 hot spares available')
@@ -24,6 +25,7 @@ test('uses English terms for French main navigation and page titles', () => {
   assert.equal(translate('RAID Calculator', 'fr'), 'RAID Calculator')
   assert.equal(translate('RAID Calculator Basic', 'fr'), 'RAID Calculator Basic')
   assert.equal(translate('RAID Calculator Advanced', 'fr'), 'RAID Calculator Advanced')
+  assert.equal(translate('Unité de capacité', 'fr'), 'Unité de capacité')
   assert.equal(translate('Convertisseur To / TiB', 'fr'), 'TB / TiB Converter')
   assert.equal(translate('Durée de copie', 'fr'), 'Copy Duration')
   assert.equal(translate('Croissance volumétrique', 'fr'), 'Volume Growth')

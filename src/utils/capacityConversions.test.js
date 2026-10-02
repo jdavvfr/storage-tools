@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { parseCapacityInput, tbToTiB, tiBToTB } from './raidCalculations.js'
+import { parseCapacityInput, tbToPB, tbToTiB, tiBToPiB, tiBToTB } from './raidCalculations.js'
+
+test('converts displayed RAID capacity values to PiB and PB without changing their base units', () => {
+  assert.equal(tiBToPiB(1024), 1)
+  assert.equal(tbToPB(1000), 1)
+  assert.equal(tbToPB(1250), 1.25)
+})
 
 test('converts decimal terabytes to binary tebibytes using the RAID calculator convention', () => {
   assert.equal(tbToTiB(1), 1_000_000_000_000 / 1_099_511_627_776)

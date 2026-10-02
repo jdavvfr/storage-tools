@@ -10,6 +10,9 @@ test('supports English and French language preferences', () => {
 })
 
 test('translates interface copy and English storage unit abbreviations', () => {
+  assert.equal(translate('RAID Recommendation', 'en'), 'RAID Recommendation')
+  assert.equal(translate('Base de données', 'en'), 'Database')
+  assert.equal(translate('Capacité maximale', 'en'), 'Maximum capacity')
   assert.equal(translate('Durée de copie', 'en'), 'Copy Duration')
   assert.equal(translate('Unité de capacité', 'en'), 'Capacity unit')
   assert.equal(translate('RAID 0 nécessite au minimum 2 disques actifs', 'en'), 'RAID 0 requires at least 2 active drives')

@@ -6,6 +6,16 @@ Une boîte à outils en ligne pour estimer une capacité, comparer des configura
 
 ## Les outils
 
+### RAID Recommendation
+
+Premier outil de la navigation, il compare RAID 5, RAID 6, RAID 10, RAID 50 et RAID 60 à partir d’une capacité utile cible, du média, de la taille maximale des disques, du nombre de baies, du workload et d’un profil d’optimisation. Des objectifs IOPS et/ou débit peuvent être ajoutés comme contraintes obligatoires. Le résultat présente les deux meilleures configurations admissibles en comparaison « Versus », avec le découpage des groupes, les capacités, l’efficacité, les performances estimées, les pannes tolérées, le rebuild et l’indice d’exposition. Si aucun candidat ne satisfait toutes les contraintes, aucune recommandation de remplacement n’est proposée.
+
+Les profils de charge réutilisent les profils IO globaux : Sauvegarde/Archivage, Virtualisation, Base de données et Vidéosurveillance. IOPS, débit et reconstruction sont des estimations, pas des mesures ni des garanties constructeur. Le rebuild réaliste reprend les hypothèses existantes de charge et de largeur RAID ; l’indice d’exposition est `temps réaliste × disques du groupe concerné`.
+
+Le score est borné à 0–100 et compare les seuls candidats qui satisfont les contraintes. Le sous-score capacité combine à 55 % la réserve utile (plafonnée à deux fois la cible) et à 45 % l’efficacité capacitive normalisée. La performance et l’efficacité sont normalisées dans le sens « plus élevé = meilleur » ; durée et indice d’exposition sont inversés. La composante exposition/résilience combine le score d’exposition inversé et le score de tolérance aux pannes : 80/20 % pour Sauvegarde et Virtualisation, 75/25 % pour Base de données et 35/65 % pour Vidéosurveillance. Les pondérations de base (capacité 40 %, exposition/résilience 35 %, rebuild 15 %, performance 10 %) sont multipliées par des facteurs de workload et d’optimisation, puis renormalisées ; les poids effectifs sont affichés avec le résultat. La capacité cible reste un seuil éliminatoire ; cette combinaison encourage la capacité utile sans que le score se réduise à retenir le candidat qui surdimensionne le plus.
+
+Les données maintenables des capacités unitaires et plateformes sont dans `src/data/raidRecommendation.js`. Les plateformes nommées et les formats génériques sont des références de pré-dimensionnement ; leur nombre de baies, les médias pris en charge et la configuration réelle doivent être confirmés auprès du constructeur.
+
 ### Calculateur RAID Basic
 
 Estimez la capacité utile, le rendement, les débits agrégés, les IOPS lecture/écriture et la tolérance aux pannes d’un groupe RAID. Choisissez un type de disque, un niveau RAID, le nombre de disques actifs, leur capacité, les hot spares et un profil d’usage. Un schéma montre l’organisation logique des disques.
@@ -79,13 +89,14 @@ Les profils ci-dessous sont des points de départ pour estimer une charge, pas d
 
 | Profil | Lectures | Accès | Taille de bloc |
 |---|---:|---|---:|
+| Base de données | 70 % | Aléatoire | 8 KiB |
 | Fichiers NAS | 70 % | Aléatoire | 64 KiB |
 | Personnalisé | 70 % | Aléatoire | 4 KiB |
 | Sauvegarde | 0 % | Séquentiel | 256 KiB |
 | Vidéosurveillance | 10 % | Séquentiel | 256 KiB |
 | Virtualisation (défaut) | 70 % | Aléatoire | 8 KiB |
 
-Le profil vidéosurveillance représente un enregistrement continu et une part de lecture pour la consultation ; adaptez-le à l’activité réelle du NVR. Dans Advanced, les tailles de bloc proposées vont de 4 à 256 KiB.
+Le profil Base de données est un point de départ transactionnel ; adaptez-le au moteur, aux index et aux mesures réelles. Le profil vidéosurveillance représente un enregistrement continu et une part de lecture pour la consultation ; adaptez-le à l’activité réelle du NVR. Dans Advanced, les tailles de bloc proposées vont de 4 à 256 KiB.
 
 Le calcul estime les IOPS logiques maximales compatibles avec les budgets physiques cumulés des disques actifs. Les IOPS de référence de chaque disque sont plafonnées par son débit nominal divisé par la taille de bloc. Une lecture logique coûte une lecture physique. Pour les écritures aléatoires, le modèle applique les coûts suivants :
 

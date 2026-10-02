@@ -244,6 +244,58 @@ body {
   font-size: 0.75rem;
 }
 
+.heading__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.capacity-unit-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #71849b;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.capacity-unit-control > .active {
+  color: #dce8f5;
+}
+
+.capacity-unit-switch {
+  display: flex;
+  align-items: center;
+  width: 38px;
+  height: 22px;
+  padding: 2px;
+  border: 1px solid #315375;
+  border-radius: 999px;
+  background: #10243e;
+  cursor: pointer;
+}
+
+.capacity-unit-switch:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 3px;
+}
+
+.capacity-unit-switch__thumb {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #5eead4;
+  transition: transform 0.18s ease;
+}
+
+.capacity-unit-switch__thumb--right {
+  transform: translateX(16px);
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1061,6 +1113,16 @@ footer.raid-assumptions {
 
   .form-grid .wide {
     grid-column: auto;
+  }
+
+  .heading {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .heading__actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .io-profile .form-grid .wide {

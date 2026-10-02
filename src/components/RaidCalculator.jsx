@@ -33,7 +33,33 @@ const diskPerformanceFields = [
   { key: 'writeBandwidthMBps', label: 'Débit écriture', unit: 'Mo/s', format: bandwidth }
 ]
 
-function Heading({ n, title, badge }) { return <div className="heading"><div><span>{n}</span><h2>{title}</h2></div><b>{badge}</b></div> }
+function Heading({ n, title, badge, children }) {
+  return <div className="heading">
+    <div><span>{n}</span><h2>{title}</h2></div>
+    <div className="heading__actions">
+      <b>{badge}</b>
+      {children}
+    </div>
+  </div>
+}
+function CapacityUnitSwitch({ usePiB, onChange }) {
+  const { t } = useLanguage()
+
+  return <div className="capacity-unit-control">
+    <span className={!usePiB ? 'active' : ''}>TiB</span>
+    <button
+      type="button"
+      className="capacity-unit-switch"
+      role="switch"
+      aria-label={t('Unité de capacité')}
+      aria-checked={usePiB}
+      onClick={() => onChange(!usePiB)}
+    >
+      <span className={`capacity-unit-switch__thumb${usePiB ? ' capacity-unit-switch__thumb--right' : ''}`} />
+    </button>
+    <span className={usePiB ? 'active' : ''}>PiB</span>
+  </div>
+}
 function Stars({ value }) { const { t } = useLanguage(); return <span className="stars" role="img" aria-label={`${t('Résilience')} : ${value} ${t('sur 5')}`}>{[1,2,3,4,5].map(x => <i key={x} className={x <= value ? 'on' : ''} />)}</span> }
 function Metric({ label, value, detail, accent = '', className = '' }) { return <article className={`metric ${accent} ${className}`}><span>{label}</span><strong>{value}</strong><small>{detail}</small></article> }
 function RebuildCard({ title, value, detail, accent, language }) { const { t } = useLanguage(); return <article className={`rebuild-card ${accent}`}><span>{t(title)}</span><strong>{value === null ? t('Non disponible') : duration(value, language)}</strong><small>{t(detail)}</small><div className="rebuild-bar"><i style={{ width: `${value === null ? 0 : Math.min(100, value / 96 * 100)}%` }} /></div></article> }
@@ -214,10 +240,12 @@ export default function RaidCalculator({ active = true, advanced = false }) {
     </section>
 
     {!advanced && result.valid && <>
-      <section className="panel"><Heading n="03" title={t('Capacité et performance')} badge={t(definition.label)} />
+      <section className="panel"><Heading n="03" title={t('Capacité et performance')} badge={t(definition.label)}>
+        <CapacityUnitSwitch usePiB={usePiB} onChange={setUsePiB} />
+      </Heading>
         <div className="metrics">
           <Metric label={t('Capacité utile')} value={capacity(result.usableTiB, usePiB, language)} detail={`${decimal(result.usableTB, usePiB, language)} ${t('sur')} ${number(result.usableDisks, 0, language)} ${t('disques utiles')}`} accent="cyan" />
-          <Metric label={t('Rendement installé')} value={`${number(result.efficiencyInstalled, 1, language)} %`} detail={`${number(result.installedRawTB, 2, language)} ${t('TB installés, hot spares inclus')}`} accent="purple" />
+          <Metric label={t('Rendement installé')} value={`${number(result.efficiencyInstalled, 1, language)} %`} detail={`${decimal(result.installedRawTB, usePiB, language)} ${t('installés, hot spares inclus')}`} accent="purple" />
           <Metric label={t('Débit lecture agrégé')} value={bandwidth(result.readBandwidthMBps, language)} detail={`${number(result.active, 0, language)} ${t('disques actifs')}`} accent="green" />
           <Metric label={t('Débit écriture agrégé')} value={bandwidth(result.writeBandwidthMBps, language)} detail={`${number(result.usableDisks, 0, language)} ${t('disques de données')}`} accent="cyan" />
           <Metric label={t('Capacité brute')} value={capacity(result.installedRawTiB, usePiB, language)} detail={`${decimal(result.installedRawTB, usePiB, language)} ${t('installés, hot spares inclus')}`} accent="purple" />
@@ -231,7 +259,9 @@ export default function RaidCalculator({ active = true, advanced = false }) {
     </>}
 
     {advanced && validComparison.length > 0 && selectedResult && <>
-      <section className="panel"><Heading n="04" title={t('Comparaison RAID')} badge={`${readPercent} % ${t('lecture')} · ${100 - readPercent} % ${t('écriture')} · ${blockSizeKiB} KiB`} />
+      <section className="panel"><Heading n="04" title={t('Comparaison RAID')} badge={`${readPercent} % ${t('lecture')} · ${100 - readPercent} % ${t('écriture')} · ${blockSizeKiB} KiB`}>
+        <CapacityUnitSwitch usePiB={usePiB} onChange={setUsePiB} />
+      </Heading>
         <p className="profile-sum">{t('Sélectionnez une ligne pour afficher ce niveau RAID dans l’organisation et l’analyse de reconstruction.')}</p>
         <div className="table-wrap">
           <table aria-label={t('Comparaison RAID')}>

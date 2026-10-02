@@ -16,6 +16,7 @@ export const translations = {
     'Modèle IOPS': 'IOPS model',
     'Performances des disques': 'Drive performance values',
     'Unités de capacité': 'Capacity units',
+    'Unité de capacité': 'Capacity unit',
     'Le To est décimal (1 To = 1 000 000 000 000 octets) et le TiB est binaire (1 TiB = 1 099 511 627 776 octets).': 'TB is decimal (1 TB = 1,000,000,000,000 bytes) and TiB is binary (1 TiB = 1,099,511,627,776 bytes).',
     'Les calculs utilisent les nombres JavaScript et le résultat affiché est arrondi à 12 décimales. Les valeurs négatives, non numériques ou trop grandes pour être représentées sont refusées.': 'Calculations use JavaScript numbers and the displayed result is rounded to 12 decimal places. Negative, non-numeric, or unrepresentably large values are rejected.',
     'Calcul théorique': 'Theoretical calculation',
@@ -406,6 +407,7 @@ export const translations = {
     'RAID Calculator': 'RAID Calculator',
     'RAID Calculator Basic': 'RAID Calculator Basic',
     'RAID Calculator Advanced': 'RAID Calculator Advanced',
+    'Unité de capacité': 'Unité de capacité',
     'Outils Tape LTO': 'LTO Tape Tools',
   }
 }

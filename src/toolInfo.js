@@ -1,7 +1,7 @@
 const RAID_IOPS_ASSUMPTIONS = 'Les IOPS logiques sont limitées par les budgets physiques cumulés des disques actifs. Une lecture logique coûte une lecture physique. Pour une écriture aléatoire, le modèle compte 1 écriture en RAID 0, 2 écritures en RAID 1/10, 2 lectures + 2 écritures en RAID 5/50 et 3 lectures + 3 écritures en RAID 6/60. Les écritures séquentielles RAID 5/6/50/60 supposent des bandes complètes alignées, sans lecture préalable ; leur coût est le nombre de disques du groupe divisé par le nombre de disques de données. Les lectures des miroirs sont supposées réparties entre leurs membres. Les IOPS par disque sont plafonnées par le débit nominal divisé par la taille de bloc ; le profil et le ratio lecture/écriture déterminent la charge logique estimée.'
 const RAID_IOPS_LIMITS = 'Ce modèle simplifié n’est ni une mesure ni une garantie constructeur. Il ignore le cache, le contrôleur, les files d’attente, la granularité réelle des E/S et les limites de bus. Ajustez les recommandations à partir des traces de charge de l’application.'
-const RAID_REBUILD_ASSUMPTIONS = 'Le temps nominal correspond à la capacité du disque divisée par le débit de rebuild retenu. Le scénario réaliste applique la charge saisie et un facteur de contention : 8 % par membre au-delà de deux en RAID 5/50, 12 % en RAID 6/60, et aucun facteur supplémentaire en RAID 1/10. Pour RAID 50/60, le domaine considéré est un groupe. Le scénario dégradé divise le temps réaliste par 0,65 (environ 1,54 fois plus long, soit +53,8 %). RAID 0 ne permet pas de reconstruire un disque.'
-const RAID_REBUILD_LIMITS = 'Ces scénarios ne sont pas des garanties : contrôleur, firmware, priorités, erreurs de lecture et charge réelle peuvent modifier sensiblement les durées.'
+const RAID_REBUILD_ASSUMPTIONS = 'Le temps nominal correspond à la capacité du disque divisée par le débit nominal retenu pour son média et ses performances. Le temps réaliste est le temps nominal divisé par le coefficient du profil de charge et le coefficient de largeur RAID. Sauvegarde correspond à une faible activité (30 %, coefficient 0,85) ; Virtualisation, Fichiers NAS et Personnalisé à une activité modérée (60 %, coefficient 0,70) ; Vidéosurveillance à une activité continue (100 %, coefficient 0,50). Le coefficient de largeur vaut 1,00 jusqu’à 8 disques, puis 0,95 jusqu’à 12, 0,90 jusqu’à 16, 0,85 jusqu’à 24, 0,80 jusqu’à 40 et 0,75 au-delà. En RAID 50/60, la largeur est celle d’un sous-groupe, pas du pool complet. L’indice d’exposition vaut le temps réaliste multiplié par le nombre de disques du groupe ; il sert de critère principal de comparaison du risque. RAID 50/60 réduit surtout le domaine de panne et l’exposition au risque, sans garantir un temps de reconstruction plus court. Le scénario dégradé divise le temps réaliste par 0,65. RAID 0 ne permet pas de reconstruire un disque.'
+const RAID_REBUILD_LIMITS = 'Ces scénarios ne sont pas des garanties : contrôleur, firmware, priorités, erreurs de lecture et charge réelle peuvent modifier sensiblement les durées. Les profils représentent des estimations et non une détection télémétrique de la charge réelle.'
 
 const makeRaidInfo = name => ({
   name,
@@ -10,7 +10,7 @@ const makeRaidInfo = name => ({
       title: 'Hypothèses',
       items: [
         { title: 'Estimation des IOPS', text: RAID_IOPS_ASSUMPTIONS },
-        { title: 'Estimation du rebuild', text: RAID_REBUILD_ASSUMPTIONS }
+        { title: 'Estimation du temps de reconstruction', text: RAID_REBUILD_ASSUMPTIONS }
       ]
     },
     {

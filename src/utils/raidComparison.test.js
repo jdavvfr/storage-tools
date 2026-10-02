@@ -3,9 +3,9 @@ import test from 'node:test'
 import { sortRaidComparison } from './raidComparison.js'
 
 const rows = [
-  { raid: 'RAID10', result: { usableTB: 40, efficiencyInstalled: 90, readBandwidthMBps: 800, readIops: 80, writeBandwidthMBps: 400, writeIops: 40, resilience: 4, rebuild: { realistic: 3 } } },
-  { raid: 'RAID5', result: { usableTB: 70, efficiencyInstalled: 70, readBandwidthMBps: 800, readIops: 100, writeBandwidthMBps: 700, writeIops: 30, resilience: 1, rebuild: { realistic: null } } },
-  { raid: 'RAID0', result: { usableTB: 80, efficiencyInstalled: 80, readBandwidthMBps: 600, readIops: 60, writeBandwidthMBps: 800, writeIops: 80, resilience: 0, rebuild: { realistic: null } } }
+  { raid: 'RAID10', result: { usableTB: 40, efficiencyInstalled: 90, readBandwidthMBps: 800, readIops: 80, writeBandwidthMBps: 400, writeIops: 40, resilience: 4, rebuild: { realistic: 3, exposureIndex: 6 } } },
+  { raid: 'RAID5', result: { usableTB: 70, efficiencyInstalled: 70, readBandwidthMBps: 800, readIops: 100, writeBandwidthMBps: 700, writeIops: 30, resilience: 1, rebuild: { realistic: null, exposureIndex: null } } },
+  { raid: 'RAID0', result: { usableTB: 80, efficiencyInstalled: 80, readBandwidthMBps: 600, readIops: 60, writeBandwidthMBps: 800, writeIops: 80, resilience: 0, rebuild: { realistic: null, exposureIndex: null } } }
 ]
 
 test('comparison sorting uses natural RAID keys and leaves unavailable rebuild estimates last', () => {
@@ -45,6 +45,28 @@ test('comparison sorting reads raw numeric values for every data metric', () => 
       `ascending sort for ${key}`
     )
   }
+})
+
+test('comparison sorting ranks RAID options by exposure and keeps unavailable estimates last', () => {
+  const exposureRows = rows.map(row => ({
+    ...row,
+    result: {
+      ...row.result,
+      rebuild: {
+        ...row.result.rebuild,
+        exposureIndex: row.raid === 'RAID5' ? 20 : row.result.rebuild.exposureIndex
+      }
+    }
+  }))
+
+  assert.deepEqual(
+    sortRaidComparison(exposureRows, { key: 'rebuild.exposureIndex', direction: 'ascending' }).map(row => row.raid),
+    ['RAID10', 'RAID5', 'RAID0']
+  )
+  assert.deepEqual(
+    sortRaidComparison(exposureRows, { key: 'rebuild.exposureIndex', direction: 'descending' }).map(row => row.raid),
+    ['RAID5', 'RAID10', 'RAID0']
+  )
 })
 
 test('comparison sorting does not mutate input and returns it unchanged without a sort', () => {

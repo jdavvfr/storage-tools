@@ -556,25 +556,60 @@ input[aria-invalid="true"] {
 
 .rebuild-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
-.rebuild-load {
-  max-width: 320px;
-  margin: 0 0 18px;
+.rebuild-profile {
+  margin: 0 0 20px;
+  padding: 18px;
+  border: 1px solid #263a54;
+  border-radius: 14px;
+  background: #0b1829;
 }
 
-.rebuild-load label {
+.rebuild-profile > strong {
+  color: #dce7f5;
+}
+
+.rebuild-profile__choices {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
+  margin: 12px 0;
 }
 
-.rebuild-load label > span {
+.rebuild-profile__choice {
+  padding: 6px 12px;
+  border: 1px solid #34465d;
+  border-radius: 999px;
   color: #9cabbd;
   font-size: 0.82rem;
-  font-weight: 650;
+}
+
+.rebuild-profile__choice.selected {
+  border-color: #38bdf8;
+  background: #12304a;
+  color: #e0f2fe;
+  font-weight: 700;
+}
+
+.rebuild-profile p {
+  margin: 8px 0 0;
+  color: #9cabbd;
+}
+
+.rebuild-profile__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin-top: 14px;
+  color: #9cabbd;
+}
+
+.rebuild-profile__metrics strong {
+  margin-left: 5px;
+  color: #e8edf5;
 }
 
 .rebuild-card {
@@ -620,6 +655,19 @@ input[aria-invalid="true"] {
 
 .rebuild-card.red .rebuild-bar i {
   background: #ef4444;
+}
+
+.rebuild-card.purple {
+  border-color: #624891;
+}
+
+.rebuild-card.purple > span {
+  color: #c4b5fd;
+}
+
+.rebuild-card.purple strong {
+  overflow-wrap: anywhere;
+  font-size: 1.5rem;
 }
 
 .spare-note {
@@ -1061,6 +1109,10 @@ footer.raid-assumptions {
 
   .metrics {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .rebuild-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .growth-calculator-grid {

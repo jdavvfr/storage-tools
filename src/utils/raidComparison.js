@@ -1,6 +1,7 @@
 const comparisonValue = (row, key) => {
   if (key === 'raid') return Number(row.raid.slice(4))
   if (key === 'rebuild.realistic') return row.result.rebuild.realistic
+  if (key === 'rebuild.exposureIndex') return row.result.rebuild.exposureIndex
   return row.result[key]
 }
 

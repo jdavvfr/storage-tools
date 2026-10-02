@@ -40,6 +40,7 @@ export const rebuildProfileByIoProfile = {
   backup: 'low',
   virtualization: 'moderate',
   files: 'moderate',
+  database: 'continuous',
   surveillance: 'continuous',
   custom: 'moderate'
 }
@@ -79,6 +80,13 @@ export const ioProfiles = {
     accessPattern: 'random',
     blockSizeKiB: 64,
     recommendation: 'Point de départ pour un serveur de fichiers : charge mixte et blocs de 64 KiB. Les petits fichiers et les accès séquentiels peuvent changer fortement ce profil.'
+  },
+  database: {
+    label: 'Base de données',
+    readPercent: 70,
+    accessPattern: 'random',
+    blockSizeKiB: 8,
+    recommendation: 'Profil indicatif de base de données transactionnelle : accès aléatoires de 8 KiB, majoritairement en lecture. Le moteur, les index et les mesures réelles peuvent modifier sensiblement cette charge.'
   },
   surveillance: {
     label: 'Vidéosurveillance',

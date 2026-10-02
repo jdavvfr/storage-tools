@@ -5,6 +5,7 @@ import { translate } from './i18n.js'
 
 test('provides distinct translated information for every tool page', () => {
   assert.deepEqual(Object.keys(TOOL_INFO), [
+    'recommendation',
     'raid',
     'raid-advanced',
     'converter',

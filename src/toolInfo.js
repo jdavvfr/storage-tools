@@ -25,6 +25,26 @@ const makeRaidInfo = name => ({
 })
 
 export const TOOL_INFO = {
+  recommendation: {
+    name: 'RAID Recommendation',
+    sections: [
+      {
+        title: 'Hypothèses',
+        items: [
+          { title: 'Données de performance', text: 'Les IOPS, débits et reconstructions sont des estimations calculées à partir des références indicatives de médias existantes et du profil IO associé au workload.' },
+          { title: 'Estimation du temps de reconstruction', text: 'Le temps nominal par disque vaut capacité / débit nominal de reconstruction. Le temps réaliste vaut temps nominal / (coefficient de charge × coefficient de largeur RAID). Pour RAID 50/60, la largeur est celle du groupe reconstruit. L’indice d’exposition vaut temps réaliste × nombre de disques du groupe.' },
+          { title: 'Score de classement', text: 'Les candidats qui atteignent la capacité et les objectifs de performance sont comparés avec des métriques normalisées de 0 à 100. Le score capacité combine une réserve utile plafonnée à deux fois la cible (55 %) et l’efficacité capacitive normalisée (45 %). Les pondérations de base sont capacité 40 %, exposition/résilience 35 %, reconstruction 15 % et performance 10 %, puis varient selon le workload et le profil d’optimisation. Le score exposition combine le score normalisé d’indice d’exposition inversé et celui de tolérance aux pannes : respectivement 80/20 % pour sauvegarde et virtualisation, 75/25 % pour les bases de données et 35/65 % pour la vidéosurveillance.' }
+        ]
+      },
+      {
+        title: 'Limites',
+        items: [
+          { title: 'Références de plateforme', text: 'Les baies et capacités de disques sont des références modifiables destinées au pré-dimensionnement. Vérifiez les références, compatibilités média et limites de configuration auprès du constructeur.' },
+          { title: 'Résultats indicatifs', text: 'Les calculs ne modélisent pas le contrôleur, le cache, les bus, les contraintes constructeur, les réserves de capacité ni les mesures réelles de l’application. Validez toute architecture en fonction du système cible.' }
+        ]
+      }
+    ]
+  },
   raid: makeRaidInfo('RAID Calculator Basic'),
   'raid-advanced': makeRaidInfo('RAID Calculator Advanced'),
   converter: {

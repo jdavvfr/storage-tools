@@ -11,12 +11,14 @@ test('usage cases map automatically to the requested rebuild workload profiles',
     backup: 'low',
     virtualization: 'moderate',
     files: 'moderate',
+    database: 'continuous',
     surveillance: 'continuous',
     custom: 'moderate'
   })
   assert.equal(getRebuildWorkloadProfile('backup'), REBUILD_WORKLOAD_PROFILES.low)
   assert.equal(getRebuildWorkloadProfile('virtualization'), REBUILD_WORKLOAD_PROFILES.moderate)
   assert.equal(getRebuildWorkloadProfile('files'), REBUILD_WORKLOAD_PROFILES.moderate)
+  assert.equal(getRebuildWorkloadProfile('database'), REBUILD_WORKLOAD_PROFILES.continuous)
   assert.equal(getRebuildWorkloadProfile('surveillance'), REBUILD_WORKLOAD_PROFILES.continuous)
   assert.equal(getRebuildWorkloadProfile('custom'), REBUILD_WORKLOAD_PROFILES.moderate)
   assert.deepEqual(
@@ -275,7 +277,7 @@ test('sequential parity writes use full-stripe costs and larger blocks hit bandw
 test('usage profiles provide valid ratios, access patterns, and block recommendations', () => {
   assert.deepEqual(
     sortedIoProfiles.map(([, profile]) => profile.label),
-    ['Fichiers NAS', 'Personnalisé', 'Sauvegarde', 'Vidéosurveillance', 'Virtualisation']
+    ['Base de données', 'Fichiers NAS', 'Personnalisé', 'Sauvegarde', 'Vidéosurveillance', 'Virtualisation']
   )
 
   for (const profile of Object.values(ioProfiles)) {
@@ -289,6 +291,10 @@ test('usage profiles provide valid ratios, access patterns, and block recommenda
   assert.equal(ioProfiles.virtualization.blockSizeKiB, 8)
   assert.equal(ioProfiles.virtualization.readPercent, 70)
   assert.equal(ioProfiles.files.blockSizeKiB, 64)
+  assert.equal(ioProfiles.database.readPercent, 70)
+  assert.equal(ioProfiles.database.accessPattern, 'random')
+  assert.equal(ioProfiles.database.blockSizeKiB, 8)
+  assert.match(ioProfiles.database.recommendation, /base de données transactionnelle/)
   assert.equal(ioProfiles.backup.accessPattern, 'sequential')
   assert.equal(ioProfiles.backup.readPercent, 0)
   assert.equal(ioProfiles.surveillance.readPercent, 10)
@@ -317,7 +323,8 @@ test('selected usage profiles drive RAID IOPS estimates from their workload sett
   const files = resultForProfile(ioProfiles.files)
 
   assert.notEqual(surveillance.totalIops, backup.totalIops)
-  assert.notEqual(surveillance.ioCosts.writeReads, backup.ioCosts.writeReads)
+  assert.equal(surveillance.ioCosts.writeReads, backup.ioCosts.writeReads)
+  assert.notEqual(surveillance.readPercent, backup.readPercent)
   assert.notEqual(surveillance.effectiveDiskReadIops, files.effectiveDiskReadIops)
 })
 

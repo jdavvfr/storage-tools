@@ -1,9 +1,41 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, DEFAULT_IO_PROFILE, getValidRaidGroupCounts, ioProfiles, raidDefinitions, sortedIoProfiles } from './raidCalculations.js'
+import { diskTypes } from '../data/disks.js'
+import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, DEFAULT_IO_PROFILE, getRaidWidthCoefficient, getRebuildWorkloadProfile, getValidRaidGroupCounts, ioProfiles, raidDefinitions, REBUILD_WORKLOAD_PROFILES, rebuildProfileByIoProfile, sortedIoProfiles } from './raidCalculations.js'
 
 const disk = { rebuildMBps: 200, readIops: 100, writeIops: 100, readBandwidthMBps: 200, writeBandwidthMBps: 200 }
-const comparisonArgs = { diskCount: 8, hotSpares: 0, diskSizeTB: 10, groupCount: 2, disk, rebuildLoad: 40 }
+const comparisonArgs = { diskCount: 8, hotSpares: 0, diskSizeTB: 10, groupCount: 2, disk }
+
+test('usage cases map automatically to the requested rebuild workload profiles', () => {
+  assert.deepEqual(rebuildProfileByIoProfile, {
+    backup: 'low',
+    virtualization: 'moderate',
+    files: 'moderate',
+    surveillance: 'continuous',
+    custom: 'moderate'
+  })
+  assert.equal(getRebuildWorkloadProfile('backup'), REBUILD_WORKLOAD_PROFILES.low)
+  assert.equal(getRebuildWorkloadProfile('virtualization'), REBUILD_WORKLOAD_PROFILES.moderate)
+  assert.equal(getRebuildWorkloadProfile('files'), REBUILD_WORKLOAD_PROFILES.moderate)
+  assert.equal(getRebuildWorkloadProfile('surveillance'), REBUILD_WORKLOAD_PROFILES.continuous)
+  assert.equal(getRebuildWorkloadProfile('custom'), REBUILD_WORKLOAD_PROFILES.moderate)
+  assert.deepEqual(
+    Object.values(REBUILD_WORKLOAD_PROFILES).map(({ dailyLoadPercent, coefficient }) => [dailyLoadPercent, coefficient]),
+    [[30, 0.85], [60, 0.70], [100, 0.50]]
+  )
+  assert.match(REBUILD_WORKLOAD_PROFILES.low.description, /Backup Repository.*archivage froid.*Veeam/)
+  assert.match(REBUILD_WORKLOAD_PROFILES.moderate.description, /Virtualisation.*serveur de fichiers.*IA \/ Analytics/)
+  assert.match(REBUILD_WORKLOAD_PROFILES.continuous.description, /vidéosurveillance.*bases de données.*industriels.*logs/)
+})
+
+test('RAID width coefficients honor every threshold and its boundary', () => {
+  for (const [width, expected] of [
+    [1, 1], [8, 1], [9, 0.95], [12, 0.95], [13, 0.90], [16, 0.90],
+    [17, 0.85], [24, 0.85], [25, 0.80], [40, 0.80], [41, 0.75]
+  ]) {
+    assert.equal(getRaidWidthCoefficient(width), expected, `width ${width}`)
+  }
+})
 
 test('valid RAID 50/60 group counts respect equal groups and minimum group sizes', () => {
   assert.deepEqual(getValidRaidGroupCounts('RAID50', 12), [2, 3, 4])
@@ -40,18 +72,56 @@ test('changing a valid RAID 50 group count updates capacity, IO costs, and rebui
   assert.equal(twoGroups.affectedGroupSize, 6)
   assert.equal(fourGroups.affectedGroupSize, 3)
   assert.notEqual(twoGroups.ioCosts.writeWrites, fourGroups.ioCosts.writeWrites)
-  assert.notEqual(twoGroups.rebuild.realistic, fourGroups.rebuild.realistic)
+  assert.equal(twoGroups.rebuild.realistic, fourGroups.rebuild.realistic)
+  assert.notEqual(twoGroups.rebuild.exposureIndex, fourGroups.rebuild.exposureIndex)
 })
 
-test('realistic rebuild estimates reflect each RAID recovery domain', () => {
+test('realistic rebuild uses the selected media rate, workload coefficient, and RAID width', () => {
   const comparison = buildRaidComparison(comparisonArgs)
-  const estimates = Object.fromEntries(comparison.filter(row => row.result.valid).map(row => [row.raid, row.result.rebuild.realistic]))
+  const result = calculateRaid({ ...comparisonArgs, raid: 'RAID6', rebuildLoadCoefficient: 0.5 })
+  const nominalHours = 10 * 1_000_000 / disk.rebuildMBps / 3600
 
-  assert.ok(estimates.RAID1 < estimates.RAID5)
-  assert.ok(estimates.RAID5 < estimates.RAID6)
-  assert.ok(estimates.RAID50 < estimates.RAID5)
-  assert.ok(estimates.RAID60 < estimates.RAID6)
-  assert.equal(estimates.RAID0, null)
+  assert.equal(result.rebuild.optimistic, nominalHours)
+  assert.equal(result.rebuild.applicationLoadCoefficient, 0.5)
+  assert.equal(result.rebuild.groupWidthCoefficient, 1)
+  assert.equal(result.rebuild.realistic, nominalHours / (0.5 * 1))
+  assert.equal(result.rebuild.exposureIndex, result.rebuild.realistic * 8)
+  assert.equal(comparison.find(row => row.raid === 'RAID0').result.rebuild.realistic, null)
+})
+
+test('HDD, SSD SAS, SSD SATA, and NVMe reference rates drive nominal rebuild time', () => {
+  const mediaTypes = ['SATA 7.2K', 'SSD SATA RI', 'SSD SAS RI', 'NVMe RI']
+  const nominalTimes = mediaTypes.map(type => {
+    const mediaDisk = diskTypes[type]
+    const result = calculateRaid({ ...comparisonArgs, raid: 'RAID5', disk: mediaDisk })
+
+    assert.equal(result.rebuild.optimistic, 10 * 1_000_000 / mediaDisk.rebuildMBps / 3600)
+    return result.rebuild.optimistic
+  })
+
+  assert.ok(nominalTimes[0] > nominalTimes[1])
+  assert.ok(nominalTimes[1] > nominalTimes[2])
+  assert.ok(nominalTimes[2] > nominalTimes[3])
+})
+
+test('RAID50 and RAID60 use individual subgroup width rather than pool width', () => {
+  const raid6 = calculateRaid({ ...comparisonArgs, raid: 'RAID6', diskCount: 60, diskSizeTB: 10 })
+  const raid60TwoGroups = calculateRaid({ ...comparisonArgs, raid: 'RAID60', diskCount: 60, diskSizeTB: 10, groupCount: 2 })
+  const raid60ThreeGroups = calculateRaid({ ...comparisonArgs, raid: 'RAID60', diskCount: 60, diskSizeTB: 10, groupCount: 3 })
+  const raid50TwoGroups = calculateRaid({ ...comparisonArgs, raid: 'RAID50', diskCount: 60, diskSizeTB: 10, groupCount: 2 })
+  const nominalHours = 10 * 1_000_000 / disk.rebuildMBps / 3600
+
+  assert.equal(raid6.affectedGroupSize, 60)
+  assert.equal(raid6.rebuild.groupWidthCoefficient, 0.75)
+  assert.equal(raid60TwoGroups.affectedGroupSize, 30)
+  assert.equal(raid60TwoGroups.rebuild.groupWidthCoefficient, 0.80)
+  assert.equal(raid60ThreeGroups.affectedGroupSize, 20)
+  assert.equal(raid60ThreeGroups.rebuild.groupWidthCoefficient, 0.85)
+  assert.equal(raid50TwoGroups.affectedGroupSize, 30)
+  assert.equal(raid50TwoGroups.rebuild.groupWidthCoefficient, 0.80)
+  assert.equal(raid60TwoGroups.rebuild.realistic, nominalHours / (0.70 * 0.80))
+  assert.equal(raid60ThreeGroups.rebuild.exposureIndex, raid60ThreeGroups.rebuild.realistic * 20)
+  assert.ok(raid60TwoGroups.rebuild.realistic < raid6.rebuild.realistic)
 })
 
 test('selected RAID result matches its comparison row', () => {

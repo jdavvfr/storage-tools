@@ -15,8 +15,10 @@ test('translates interface copy and English storage unit abbreviations', () => {
   assert.equal(translate('RAID 0 nécessite au minimum 2 disques actifs', 'en'), 'RAID 0 requires at least 2 active drives')
   assert.equal(translate('Groupe RAID 5 2', 'en'), 'RAID 5 group 2')
   assert.equal(translate('3 hot spares disponibles', 'en'), '3 hot spares available')
-  assert.equal(translate('Charge 10 % · facteur domaine ×1.2', 'en'), 'Load 10% · group factor ×1.2')
   assert.equal(translate('4 Go/s et 2 To', 'en'), '4 GB/s et 2 TB')
+  assert.equal(translate('Estimation du temps de reconstruction', 'en'), 'Rebuild time estimate')
+  assert.equal(translate('Profil de charge détecté', 'en'), 'Detected workload profile')
+  assert.equal(translate('Indice d’exposition', 'en'), 'Exposure index')
 })
 
 test('uses English terms for French main navigation and page titles', () => {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLanguage } from '../LanguageContext'
 import { diskTypes } from '../data/disks'
-import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, DEFAULT_IO_PROFILE, ioProfiles, raidDefinitions, sortedIoProfiles, tbToPB, tiBToPiB } from '../utils/raidCalculations'
+import { buildRaidComparison, calculateNominalRebuildBandwidth, calculateRaid, DEFAULT_IO_PROFILE, getRebuildWorkloadProfile, ioProfiles, raidDefinitions, sortedIoProfiles, tbToPB, tiBToPiB } from '../utils/raidCalculations'
 import { sortRaidComparison } from '../utils/raidComparison'
 import { formatIops } from '../utils/formatIops'
 import { RaidDiagram, RaidGroupCountControl } from './RaidEnhancements'
@@ -23,6 +23,7 @@ const comparisonSortOptions = [
   { key: 'readIops', label: 'IOPS LECTURE' },
   { key: 'writeBandwidthMBps', label: 'DÉBIT ÉCRITURE' },
   { key: 'writeIops', label: 'IOPS ÉCRITURE' },
+  { key: 'rebuild.exposureIndex', label: 'INDICE D’EXPOSITION' },
   { key: 'rebuild.realistic', label: 'REBUILD RÉALISTE' },
   { key: 'resilience', label: 'RÉSILIENCE' }
 ]
@@ -89,7 +90,6 @@ export default function RaidCalculator({ active = true, advanced = false }) {
   const [hotSpares, setHotSpares] = useState(0)
   const [diskSizeTB, setDiskSizeTB] = useState('')
   const [groupCount, setGroupCount] = useState(2)
-  const [rebuildLoad, setRebuildLoad] = useState(0)
   const calculateIops = true
   const calculateRebuild = advanced
   const [usePiB, setUsePiB] = useState(false)
@@ -100,7 +100,7 @@ export default function RaidCalculator({ active = true, advanced = false }) {
   const [blockSizeKiB, setBlockSizeKiB] = useState(ioProfiles[defaultProfile].blockSizeKiB)
   const [manualSelection, setManualSelection] = useState(null)
   const [parameterRevision, setParameterRevision] = useState(0)
-  const [comparisonSort, setComparisonSort] = useState(null)
+  const [comparisonSort, setComparisonSort] = useState({ key: 'rebuild.exposureIndex', direction: 'ascending' })
 
   const disk = diskTypes[diskType]
   const currentDiskPerformanceValues = disk
@@ -125,7 +125,8 @@ export default function RaidCalculator({ active = true, advanced = false }) {
   })
   const definition = raidDefinitions[raid]
   const grouped = ['RAID50', 'RAID60'].includes(raid)
-  const args = { raid, diskCount, hotSpares, diskSizeTB, groupCount, disk: calculationDisk, rebuildLoad, readPercent, accessPattern, blockSizeKiB, calculateIops, calculateRebuild }
+  const rebuildWorkloadProfile = getRebuildWorkloadProfile(ioProfile)
+  const args = { raid, diskCount, hotSpares, diskSizeTB, groupCount, disk: calculationDisk, rebuildLoadCoefficient: rebuildWorkloadProfile.coefficient, readPercent, accessPattern, blockSizeKiB, calculateIops, calculateRebuild }
   const result = calculateRaid(args)
   const comparison = advanced ? buildRaidComparison(args) : []
   const validComparison = comparison.filter(row => row.result.valid)
@@ -329,6 +330,12 @@ export default function RaidCalculator({ active = true, advanced = false }) {
                   {!isSelected && <ComparisonIndicator value={x.result.writeIops} selectedValue={selectedResult.writeIops} metric={t('IOPS écriture')} />}
                 </td>
                 <td>
+                  {x.result.rebuild.exposureIndex === null ? t('Non disponible') : <>
+                    {number(x.result.rebuild.exposureIndex, 1, language)} {t('h·disques')}
+                    {!isSelected && <ComparisonIndicator value={x.result.rebuild.exposureIndex} selectedValue={selectedResult.rebuild.exposureIndex} lowerIsBetter metric={t('Indice d’exposition')} />}
+                  </>}
+                </td>
+                <td>
                   {x.result.rebuild.realistic === null ? t('Non disponible') : <>
                     {duration(x.result.rebuild.realistic, language)}
                     {!isSelected && <ComparisonIndicator value={x.result.rebuild.realistic} selectedValue={selectedResult.rebuild.realistic} lowerIsBetter metric={t('Durée de rebuild')} />}
@@ -347,13 +354,33 @@ export default function RaidCalculator({ active = true, advanced = false }) {
 
       <RaidDiagram raid={selectedComparisonRaid} diskCount={diskCount} hotSpares={hotSpares} groupCount={groupCount} onGroupCountChange={value => updateParameter(setGroupCount, value)} sectionNumber="05" />
 
-      <section className="panel"><Heading n="06" title={t('Analyse de reconstruction')} badge={`${t(selectedComparison.definition.label)} · ${selectedResult.affectedGroupSize} ${t('disques dans le domaine concerné')}`} />
-        <div className="rebuild-load"><label><span>{t('Charge pendant le rebuild')}</span><div className="input-unit"><input type="number" min="0" max="85" step="1" value={rebuildLoad} onChange={e => updateParameter(setRebuildLoad, Number(e.target.value))} /><em>%</em></div></label></div>
+      <section className="panel"><Heading n="06" title={t('Estimation du temps de reconstruction')} badge={`${t(selectedComparison.definition.label)} · ${selectedResult.affectedGroupSize} ${t('disques dans le domaine concerné')}`} />
+        <div className="rebuild-profile">
+          <strong>{t('Profil de charge détecté')}</strong>
+          <div className="rebuild-profile__choices" role="group" aria-label={t('Profil de charge détecté')}>
+            {Object.entries({ low: 'Faible', moderate: 'Modérée', continuous: 'Continue' }).map(([key, label]) => (
+              <span key={key} className={`rebuild-profile__choice${rebuildWorkloadProfile.id === key ? ' selected' : ''}`} aria-current={rebuildWorkloadProfile.id === key ? 'true' : undefined}>
+                {t(label)}
+              </span>
+            ))}
+          </div>
+          <p><strong>{t('Profil appliqué automatiquement :')}</strong> {t(selectedProfile.label)}</p>
+          <p>{t(rebuildWorkloadProfile.description)}</p>
+          <div className="rebuild-profile__metrics">
+            <span>{t('Charge moyenne journalière estimée')} <strong>{rebuildWorkloadProfile.dailyLoadPercent} %</strong></span>
+            <span>{t('Coefficient de charge')} <strong>×{number(rebuildWorkloadProfile.coefficient, 2, language)}</strong></span>
+          </div>
+        </div>
         <div className="rebuild-grid">
         <RebuildCard title="Optimiste" value={selectedResult.rebuild.optimistic} detail={selectedResult.rebuildSupported ? 'Débit nominal, aucune charge applicative' : 'Impossible : RAID 0 ne protège pas les données'} accent="green" language={language} />
-        <RebuildCard title="Réaliste" value={selectedResult.rebuild.realistic} detail={selectedResult.rebuildSupported ? `Charge ${rebuildLoad} % : ×${number(selectedResult.rebuild.applicationLoadFactor, 2, language)} · Domaine de ${selectedResult.affectedGroupSize} disques : ×${number(selectedResult.rebuild.domainContentionFactor, 2, language)} · Facteur cumulé : ×${number(selectedResult.rebuild.combinedFactor, 2, language)}` : 'Impossible : RAID 0 ne protège pas les données'} accent="orange" language={language} />
+        <RebuildCard title="Réaliste" value={selectedResult.rebuild.realistic} detail={selectedResult.rebuildSupported
+          ? <>{t('Coefficient de charge')} ×{number(selectedResult.rebuild.applicationLoadCoefficient, 2, language)} · {t('Coefficient de largeur RAID')} ×{number(selectedResult.rebuild.groupWidthCoefficient, 2, language)}</>
+          : 'Impossible : RAID 0 ne protège pas les données'} accent="orange" language={language} />
         <RebuildCard title="Dégradé" value={selectedResult.rebuild.degraded} detail={selectedResult.rebuildSupported ? 'Temps réaliste divisé par 0,65 (environ +53,8 %)' : 'Impossible : RAID 0 ne protège pas les données'} accent="red" language={language} />
-      </div><div className={`spare-note ${selectedResult.spares ? 'ok' : 'warning'}`}><strong>{t(selectedResult.hotSpareStatus)}</strong><span>{t(selectedResult.spares ? 'La reconstruction peut démarrer automatiquement si le contrôleur est configuré pour utiliser le spare' : 'Prévoir un remplacement manuel rapide pour limiter la fenêtre sans redondance complète')}</span></div></section>
+        <article className="rebuild-card purple"><span>{t('Indice d’exposition')}</span><strong>{selectedResult.rebuild.exposureIndex === null ? t('Non disponible') : `${number(selectedResult.rebuild.exposureIndex, 1, language)} ${t('h·disques')}`}</strong><small>{t('Temps réaliste × nombre de disques du groupe RAID')}</small></article>
+      </div>
+      <p className="profile-sum">{t('L’indice d’exposition est le critère principal de risque RAID : il combine la durée réaliste et le nombre de disques exposés. RAID 50/60 réduit surtout le domaine de panne et l’exposition au risque ; cela ne garantit pas un temps de reconstruction plus court.')}</p>
+      <div className={`spare-note ${selectedResult.spares ? 'ok' : 'warning'}`}><strong>{t(selectedResult.hotSpareStatus)}</strong><span>{t(selectedResult.spares ? 'La reconstruction peut démarrer automatiquement si le contrôleur est configuré pour utiliser le spare' : 'Prévoir un remplacement manuel rapide pour limiter la fenêtre sans redondance complète')}</span></div></section>
 
     </>}
 

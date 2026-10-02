@@ -14,7 +14,7 @@ Le catalogue propose 12 profils indicatifs de disques HDD, SSD SATA/SAS et NVMe.
 
 ### Calculateur RAID Advanced
 
-Retrouvez le dimensionnement Basic et comparez les niveaux RAID valides pour votre configuration. Vous pouvez aussi modifier les IOPS et débits de référence du disque, régler précisément la charge IO, puis consulter trois scénarios de reconstruction. Le tableau permet de trier les résultats et de sélectionner un niveau pour afficher son schéma et son analyse de rebuild.
+Retrouvez le dimensionnement Basic et comparez les niveaux RAID valides pour votre configuration. Vous pouvez aussi modifier les IOPS et débits de référence du disque, régler précisément la charge IO, puis consulter trois scénarios de reconstruction. Le profil de reconstruction est déterminé automatiquement par le profil d’usage sélectionné ; le tableau est trié par indice d’exposition au risque et permet de sélectionner un niveau pour afficher son schéma et son estimation du temps de reconstruction.
 
 Le débit nominal de rebuild est recalculé à partir des débits lecture/écriture personnalisés : le débit de référence est multiplié par le plus faible des deux ratios entre valeur personnalisée et valeur de référence. Les hot spares sont pris en compte dans la capacité brute installée et le rendement installé, mais pas dans la capacité utile ni dans les budgets de performance des disques actifs.
 
@@ -100,17 +100,21 @@ Pour les écritures séquentielles en RAID 5/6/50/60, le modèle suppose que le 
 
 Ce modèle théorique ne tient pas compte du cache, du contrôleur, des files d’attente, des limites de bus ni du comportement propre à l’application. Il ne représente ni une mesure ni une garantie constructeur ; utilisez des traces de charge réelles pour dimensionner un système de production.
 
-## Hypothèses de reconstruction (Advanced)
+## Estimation du temps de reconstruction (Advanced)
 
-Les durées sont des estimations par disque, fondées sur la capacité d’un disque et son débit nominal de rebuild retenu :
+Le débit nominal retenu dépend du média choisi (HDD, SSD SAS, SSD SATA ou NVMe) et, dans Advanced, des débits lecture/écriture personnalisés. Les durées sont des estimations par disque :
 
-1. **Optimiste** : `capacité du disque / débit nominal de rebuild`, sans charge applicative.
-2. **Réaliste** : le temps nominal est divisé par `max(0,15, 1 − charge / 100)`, puis multiplié par un facteur de contention du domaine de reconstruction. La charge pendant le rebuild est réglable de 0 à 85 %.
+1. **Nominal / optimiste** : `capacité du disque / débit nominal de reconstruction`.
+2. **Réaliste** : `temps nominal / (coefficient de charge × coefficient de largeur RAID)`. Le profil de charge est dérivé du profil d’usage : Sauvegarde correspond à une faible activité (30 % de charge moyenne journalière, coefficient 0,85) ; Virtualisation, Fichiers NAS et Personnalisé à une activité modérée (60 %, coefficient 0,70) ; Vidéosurveillance à une activité continue (100 %, coefficient 0,50). Le profil choisi et sa charge estimée sont affichés avec le résultat ; aucun champ de charge manuelle n’est proposé.
 3. **Dégradé** : le temps réaliste est divisé par `0,65`, soit environ 1,54 fois le temps réaliste (environ 53,8 % de durée supplémentaire).
 
-Le facteur de contention vaut `1 + max(0, taille du domaine − 2) × taux de contention`. Il n’ajoute aucune contention pour RAID 1/10 ; le taux est de 8 % par membre supplémentaire en RAID 5/50 et de 12 % en RAID 6/60. Pour RAID 50/60, le domaine concerné est un groupe ; pour RAID 5/6, c’est l’ensemble des disques actifs. RAID 0 ne dispose d’aucune redondance et ne peut pas reconstruire un disque.
+Le coefficient de largeur RAID dépend du nombre de disques dans le groupe reconstruit : jusqu’à 8 disques, 1,00 ; 9–12, 0,95 ; 13–16, 0,90 ; 17–24, 0,85 ; 25–40, 0,80 ; plus de 40, 0,75. En RAID 50/60, la largeur est celle d’un sous-groupe, pas celle du pool complet : par exemple RAID 6 58+2 utilise une largeur de 60, RAID 60 2 × (28+2) une largeur de 30 et RAID 60 3 × (18+2) une largeur de 20. RAID 0 ne dispose d’aucune redondance et ne peut pas reconstruire un disque.
 
-Ces scénarios ne sont pas des garanties de durée. Le contrôleur, son firmware et ses priorités, la charge réelle et les erreurs de lecture peuvent modifier sensiblement le temps observé. Un hot spare peut permettre un démarrage automatique de la reconstruction si le contrôleur est configuré en conséquence.
+L’**indice d’exposition** vaut `temps réaliste × nombre de disques du groupe RAID`. Il constitue le critère principal de comparaison du risque et de la recommandation RAID : il combine durée estimée et nombre de disques concernés. RAID 50/60 réduit principalement le domaine de panne et l’exposition au risque ; cela ne garantit pas une reconstruction plus rapide.
+
+Ces estimations ne sont pas des garanties de durée. Le contrôleur, son firmware et ses priorités, la charge réelle et les erreurs de lecture peuvent modifier sensiblement le temps observé. Un hot spare peut permettre un démarrage automatique de la reconstruction si le contrôleur est configuré en conséquence.
+
+La classification reprend les options de profil d’usage déjà disponibles dans l’application ; « Personnalisé » utilise l’activité modérée par défaut. Backup Repository/Archivage, IA / Analytics et Base de données sont des contextes représentés par ces catégories, pas des choix d’usage distincts dans l’interface actuelle.
 
 ## Lancer le projet en local
 

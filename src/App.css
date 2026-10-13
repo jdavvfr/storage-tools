@@ -1163,7 +1163,8 @@ footer.raid-assumptions {
 
 .recommendation-assumption,
 .recommendation-weight-summary,
-.recommendation-fit-reason {
+.recommendation-fit-reason,
+.recommendation-parity-comparison {
   margin: 18px 0 0;
   color: #8fa4b9;
   font-size: 0.86rem;
@@ -1172,7 +1173,8 @@ footer.raid-assumptions {
 
 .recommendation-assumption strong,
 .recommendation-weight-summary strong,
-.recommendation-fit-reason strong {
+.recommendation-fit-reason strong,
+.recommendation-parity-comparison strong {
   color: #dce7f5;
 }
 
@@ -1243,6 +1245,54 @@ footer.raid-assumptions {
   color: #94a3b8;
   font-size: 0.82rem;
   line-height: 1.45;
+}
+
+.recommendation-card__reason,
+.recommendation-pair-comparison {
+  margin: 14px 0 0;
+  color: #b6c6d8;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.recommendation-pair-comparison {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid #29415f;
+  border-radius: 12px;
+  background: #0b1829;
+}
+
+.recommendation-pair-comparison h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.recommendation-pair-comparison dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.recommendation-pair-comparison dl > div {
+  min-width: 0;
+  padding: 10px;
+  border-radius: 9px;
+  background: #091522;
+}
+
+.recommendation-pair-comparison dt {
+  color: #8296ad;
+  font-size: 0.72rem;
+}
+
+.recommendation-pair-comparison dd {
+  margin: 5px 0 0;
+  color: #e8edf5;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .recommendation-score {
@@ -1394,7 +1444,8 @@ footer.raid-assumptions {
   .recommendation-input-grid,
   .recommendation-form-grid,
   .recommendation-metrics,
-  .recommendation-card__notes {
+  .recommendation-card__notes,
+  .recommendation-pair-comparison dl {
     grid-template-columns: 1fr;
   }
 

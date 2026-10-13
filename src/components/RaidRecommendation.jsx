@@ -24,6 +24,16 @@ function formatDuration(hours, language) {
   return `${number(hours, 1, language)} ${language === 'en' ? 'h' : 'h'}`
 }
 
+function parityDescription(raid, t) {
+  return t({
+    RAID5: 'Parité simple',
+    RAID50: 'Parité simple par groupe',
+    RAID6: 'Double parité',
+    RAID60: 'Double parité par groupe',
+    RAID10: 'Miroirs sans parité'
+  }[raid])
+}
+
 function Heading({ title, badge }) {
   return <div className="heading">
     <div><span>01</span><h2>{title}</h2></div>
@@ -35,11 +45,14 @@ function RecommendationCard({ candidate, rank, unit, language, t }) {
   const recommended = rank === 0
   const { result } = candidate
   const breakdownKeys = [
-    ['capacity', 'Capacité utile / efficacité'],
-    ['exposure', 'Exposition + tolérance aux pannes'],
+    ['capacity', 'Adéquation à la capacité'],
+    ['efficiency', 'Efficacité capacitive'],
+    ['performance', 'Performance'],
     ['rebuild', 'Temps de reconstruction'],
-    ['performance', 'Performance']
+    ['risk', 'Exposition au risque'],
+    ['resilience', 'Résilience intrinsèque']
   ]
+  const criterionLabels = Object.fromEntries(breakdownKeys.map(([key, label]) => [key, label]))
   const benefits = candidate.raid === 'RAID10'
     ? ['Bonnes performances aléatoires', 'Pas de pénalité de parité']
     : candidate.raid === 'RAID50' || candidate.raid === 'RAID60'
@@ -74,9 +87,10 @@ function RecommendationCard({ candidate, rank, unit, language, t }) {
       <div><dt>{t('Reconstruction nominale')}</dt><dd>{formatDuration(result.rebuild.optimistic, language)}</dd></div>
       <div><dt>{t('Reconstruction réaliste')}</dt><dd>{formatDuration(result.rebuild.realistic, language)}</dd></div>
       <div><dt>{t('Hypothèses rebuild')}</dt><dd>{t('Charge')} ×{number(result.rebuild.applicationLoadCoefficient, 2, language)} · {t('Largeur RAID')} ×{number(result.rebuild.groupWidthCoefficient, 2, language)}</dd></div>
-      <div><dt>{t('Indice d’exposition ajusté')}</dt><dd>{number(candidate.exposureIndex, 1, language)} {t('h·disques')}</dd></div>
-      <div><dt>{t('Facteurs de risque')}</dt><dd>{t('Résilience')} ×{number(candidate.raidResilienceFactor, 2, language)} · {t('Taille')} ×{number(candidate.driveSizeRiskFactor, 2, language)}{candidate.singleParitySurcharge > 1 ? ` · ${t('Parité simple')} ×${number(candidate.singleParitySurcharge, 2, language)}` : ''}</dd></div>
+      <div><dt>{t('RiskIndex absolu')}</dt><dd>{number(candidate.riskIndex, 0, language)} {t('unités de risque ajustées')}</dd></div>
+      <div><dt>{t('Facteurs de risque')}</dt><dd>{t('Parité')} ×{number(candidate.parityRiskFactor, 2, language)} · {t('Taille')} ×{number(candidate.driveSizeRiskFactor, 2, language)} · {t('Largeur')} ×{number(candidate.widthRiskFactor, 2, language)} · {t('Workload')} ×{number(candidate.workloadRiskFactor, 2, language)} · {t('Utilisation')} ×{number(candidate.utilizationFactor, 2, language)}</dd></div>
     </dl>
+    <p className="recommendation-card__reason"><strong>{t('Pourquoi ce rang')} :</strong> {candidate.scoreReasons.map(({ criterion, value }) => `${t(criterionLabels[criterion])} ${number(value, 0, language)}/100`).join(' · ')}</p>
     <div className="recommendation-card__notes">
       <div><strong>{t('Avantages')}</strong><ul>{benefits.map(item => <li key={item}>{t(item)}</li>)}</ul></div>
       <div><strong>{t('Compromis')}</strong><ul>{tradeoffs.map(item => <li key={item}>{t(item)}</li>)}</ul></div>
@@ -142,10 +156,12 @@ export default function RaidRecommendation() {
 
   const weights = recommendation.weights
   const weightSummary = weights && [
-    ['capacity', 'Capacité'],
-    ['exposure', 'Exposition / résilience'],
-    ['rebuild', 'Rebuild'],
-    ['performance', 'Performance']
+    ['capacity', 'Adéquation à la capacité'],
+    ['efficiency', 'Efficacité capacitive'],
+    ['performance', 'Performance'],
+    ['rebuild', 'Temps de reconstruction'],
+    ['risk', 'Exposition au risque'],
+    ['resilience', 'Résilience intrinsèque']
   ].map(([key, label]) => `${t(label)} ${number(weights[key] * 100, 0, language)} %`).join(' · ')
 
   return <section className="raid-recommendation" aria-labelledby="raid-recommendation-title">
@@ -220,7 +236,7 @@ export default function RaidRecommendation() {
           <small>{t('Les objectifs renseignés sont des seuils obligatoires ; laissez les champs vides pour ne pas filtrer sur la performance. Le débit vérifié est pondéré par le ratio lecture/écriture du profil IO.')}</small>
         </fieldset>
       </div>
-      <p className="recommendation-assumption"><strong>{t('Estimations, pas mesures')}.</strong> {t('Les performances reprennent les références indicatives du calculateur pour le type de média choisi. Le temps nominal est la capacité du disque divisée par son débit rebuild nominal ; le temps réaliste divise ce résultat par les coefficients de charge et de largeur RAID affichés pour chaque candidat. L’exposition ajustée est le temps réaliste en heures × largeur du groupe × facteur de résilience RAID × facteur de risque taille disque × surcharge simple parité éventuelle. Tous les facteurs sont sans unité ; l’exposition reste en heures-disques ajustées.')}</p>
+      <p className="recommendation-assumption"><strong>{t('Estimations, pas mesures')}.</strong> {t('Les performances reprennent les références indicatives du calculateur pour le type de média choisi. La réserve de capacité obligatoire vaut 20 % pour sauvegarde/archivage et base de données, 15 % pour vidéosurveillance, virtualisation et généraliste. Le score de capacité augmente faiblement après cette réserve et plafonne rapidement. Le temps nominal est la capacité du disque divisée par son débit rebuild nominal ; le temps réaliste divise ce résultat par les coefficients de charge et de largeur RAID affichés pour chaque candidat. Le RiskIndex est le produit des heures de reconstruction × largeur du domaine × facteur de parité × taille du disque × largeur progressive × workload × utilisation. Ces facteurs sont sans unité et bornés ; le RiskIndex est une unité de comparaison, pas une probabilité de panne.')}</p>
     </article>
 
     {!recommendation.valid && <p className="error" role="alert">{t('Entrez une capacité cible positive et des limites d’infrastructure valides.')}</p>}
@@ -236,10 +252,10 @@ export default function RaidRecommendation() {
       <section className="panel" aria-labelledby="recommendation-results-title">
         <Heading title={t('Comparatif « Versus »')} badge={t(OPTIMIZATION_PROFILES[optimization].label)} />
         <h2 className="recommendation-results-title" id="recommendation-results-title">{t('Les meilleures configurations pour')} {t(RECOMMENDATION_WORKLOADS[workload].label)}</h2>
-        <p className="profile-sum">{t('Le score /100 combine capacité utile et efficacité capacitive, exposition ajustée selon la tolérance aux pannes, durée réaliste de reconstruction et performances estimées. Le score capacité combine à 55 % une réserve utile plafonnée à deux fois la cible et à 45 % le rendement capacitif normalisé. Les métriques sont normalisées sur les configurations qui satisfont toutes les contraintes ; le meilleur score est la recommandation principale. Le profil d’optimisation « Capacité maximale » utilise la politique capacité existante.')}</p>
+        <p className="profile-sum">{t('Le score total /100 sépare six sous-scores : adéquation à la capacité avec réserve obligatoire, efficacité capacitive, performances, durée de reconstruction, RiskIndex absolu et résilience intrinsèque. Le RiskIndex est transformé par 100/(1 + RiskIndex/3 000) ; il n’est pas normalisé selon les candidats affichés. Le score de reconstruction vaut 100/(1 + heures/48). Le score d’adéquation plafonne après 20 % de capacité supplémentaire au-delà de la réserve. La capacité et les performances sont filtrées avant classement si un objectif est renseigné. Le meilleur score est la recommandation principale.')}</p>
         <p className="recommendation-weight-summary"><strong>{t('Pondérations appliquées')} :</strong> {weightSummary}</p>
         <p className="recommendation-fit-reason"><strong>{t('Pourquoi cette recommandation')} :</strong> {t({
-          backup: 'Pour la sauvegarde et l’archivage, le classement favorise l’efficacité capacitive et limite l’exposition pendant la reconstruction.',
+          backup: 'Pour la sauvegarde et l’archivage, les poids fixes privilégient le risque et la résilience (55 %), tout en distinguant adéquation et efficacité capacitive.',
           virtualization: 'Pour la virtualisation, le classement équilibre efficacité, performances mixtes et taille du domaine de reconstruction.',
           database: 'Pour une base de données, le classement valorise davantage les IOPS estimées et les domaines de panne contenus.',
           surveillance: 'Pour la vidéosurveillance, le classement privilégie la capacité et le débit séquentiel tout en tenant compte de la double parité.'
@@ -249,6 +265,19 @@ export default function RaidRecommendation() {
             <RecommendationCard key={candidate.id} candidate={candidate} rank={index} unit={capacityUnit} language={language} t={t} />
           ))}
         </div>
+        {recommendation.comparison.rankedWinners.length === 2 && <section className="recommendation-pair-comparison" aria-label={t('Comparaison des deux recommandations classées')}>
+          <h3>{t('Comparaison des deux recommandations classées')}</h3>
+          <dl>
+            <div><dt>{t('Capacité utile')}</dt><dd>{formatCapacity(recommendation.comparison.rankedWinners[0].result.usableTB, capacityUnit, language)} · {recommendation.comparison.rankedWinners[0].raid} / {formatCapacity(recommendation.comparison.rankedWinners[1].result.usableTB, capacityUnit, language)} · {recommendation.comparison.rankedWinners[1].raid}</dd></div>
+            <div><dt>{t('Reconstruction réaliste')}</dt><dd>{formatDuration(recommendation.comparison.rankedWinners[0].result.rebuild.realistic, language)} · {recommendation.comparison.rankedWinners[0].raid} / {formatDuration(recommendation.comparison.rankedWinners[1].result.rebuild.realistic, language)} · {recommendation.comparison.rankedWinners[1].raid}</dd></div>
+            <div><dt>{t('Domaines de panne')}</dt><dd>{recommendation.comparison.rankedWinners[0].failureDomain} / {recommendation.comparison.rankedWinners[1].failureDomain}</dd></div>
+            <div><dt>{t('Parité simple ou double')}</dt><dd>{parityDescription(recommendation.comparison.rankedWinners[0].raid, t)} / {parityDescription(recommendation.comparison.rankedWinners[1].raid, t)}</dd></div>
+            <div><dt>{t('Taille des disques')}</dt><dd>{formatCapacity(recommendation.comparison.rankedWinners[0].diskSizeTB, 'To', language)} / {formatCapacity(recommendation.comparison.rankedWinners[1].diskSizeTB, 'To', language)}</dd></div>
+          </dl>
+        </section>}
+        {recommendation.comparison.raid50VsRaid60 && <p className="recommendation-parity-comparison" role="note">
+          <strong>{t('Comparaison RAID50 / RAID60 à configuration identique')} :</strong> {number(recommendation.comparison.raid50VsRaid60.raid50.diskCount, 0, language)} {t('disques')} × {formatCapacity(recommendation.comparison.raid50VsRaid60.raid50.diskSizeTB, 'To', language)} · {number(recommendation.comparison.raid50VsRaid60.raid50.groupCount, 0, language)} {t('groupes')} — RAID50 {formatCapacity(recommendation.comparison.raid50VsRaid60.raid50.result.usableTB, capacityUnit, language)}/ RAID60 {formatCapacity(recommendation.comparison.raid50VsRaid60.raid60.result.usableTB, capacityUnit, language)} ; {t('Écart RAID50−RAID60 (positif = gain RAID50)')} {formatCapacity(recommendation.comparison.raid50VsRaid60.capacityDifferenceTB, capacityUnit, language)}. {t('Reconstruction')} {formatDuration(recommendation.comparison.raid50VsRaid60.raid50.result.rebuild.realistic, language)} / {formatDuration(recommendation.comparison.raid50VsRaid60.raid60.result.rebuild.realistic, language)}. {t('Domaines')} {recommendation.comparison.raid50VsRaid60.raid50.failureDomain} / {recommendation.comparison.raid50VsRaid60.raid60.failureDomain}.
+        </p>}
         <p className="recommendation-assumption">{t('Les scores ne sont pas des garanties de performance : ils servent à comparer ces candidats entre eux, avec les hypothèses affichées. Validez toute architecture avec les exigences du constructeur et des mesures de charge réelles.')}</p>
       </section>
     </>}

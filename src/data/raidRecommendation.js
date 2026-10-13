@@ -40,7 +40,7 @@ export const RECOMMENDATION_WORKLOADS = {
 }
 
 export const OPTIMIZATION_PROFILES = {
-  capacity: { label: 'Capacité maximale', factors: { capacity: 1.5, exposure: 0.75, rebuild: 0.75, performance: 0.6 } },
-  balanced: { label: 'Équilibré', factors: { capacity: 1, exposure: 1, rebuild: 1, performance: 1 } },
-  resilience: { label: 'Résilience maximale', factors: { capacity: 0.75, exposure: 1.3, rebuild: 1.25, performance: 0.9 } }
+  capacity: { label: 'Capacité maximale', factors: { capacity: 1.5, efficiency: 1.3, performance: 0.6, rebuild: 0.75, risk: 0.75, resilience: 0.8 } },
+  balanced: { label: 'Équilibré', factors: { capacity: 1, efficiency: 1, performance: 1, rebuild: 1, risk: 1, resilience: 1 } },
+  resilience: { label: 'Résilience maximale', factors: { capacity: 0.75, efficiency: 0.8, performance: 0.9, rebuild: 1.25, risk: 1.3, resilience: 1.4 } }
 }
